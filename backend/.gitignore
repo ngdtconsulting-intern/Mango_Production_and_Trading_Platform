@@ -1,0 +1,76 @@
+# ============================================
+# Mango Platform Backend - .gitignore
+# ============================================
+
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build
+dist/
+build/
+
+# Uploads directory (user uploaded files)
+uploads/
+!uploads/.gitkeep
+
+# Database dumps
+dumps/
+*.dump
+*.bak
+*.sql
+
+# Testing
+coverage/
+.nyc_output/
+__tests__/coverage/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Process manager
+ecosystem.config.js.bak
+
+# SSL certificates (never commit these)
+*.pem
+*.key
+*.crt
+*.csr
+ssl/
+
+# Secrets
+secrets/
+*.secret
+
+# PM2
+.pm2/
+
+# Misc
+*.pid
+*.seed
+.cache/
