@@ -69,19 +69,16 @@ const surveySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Calculate hectare from katha
-surveySchema.pre('save', function (next) {
-  this.orchardAreaHectare = (this.orchardAreaKatha * 0.0338).toFixed(4);
-  this.totalProductionMT = (this.totalProductionKg * 0.001).toFixed(4);
+// Calculate hectare from katha - NO next() needed with async
+surveySchema.pre('save', async function () {
+  this.orchardAreaHectare = parseFloat((this.orchardAreaKatha * 0.0338).toFixed(4));
+  this.totalProductionMT = parseFloat((this.totalProductionKg * 0.001).toFixed(4));
 
-  if (this.totalEarnings2081 && this.totalEarnings2082) {
-    this.earningsGrowth = (
-      ((this.totalEarnings2082 - this.totalEarnings2081) / this.totalEarnings2081) *
-      100
-    ).toFixed(2);
+  if (this.totalEarnings2081 && this.totalEarnings2082 && this.totalEarnings2081 > 0) {
+    this.earningsGrowth = parseFloat(
+      (((this.totalEarnings2082 - this.totalEarnings2081) / this.totalEarnings2081) * 100).toFixed(2)
+    );
   }
-
-  next();
 });
 
 export default mongoose.model('Survey', surveySchema);

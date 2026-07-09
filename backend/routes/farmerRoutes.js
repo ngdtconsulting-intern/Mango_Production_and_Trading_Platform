@@ -1,11 +1,5 @@
 import express from 'express';
-import {
-  createFarm,
-  getFarms,
-  getFarmById,
-  updateFarm,
-  deleteFarm,
-} from '../controllers/farmerController.js';
+import { createFarm, getFarms, getFarmById, updateFarm, deleteFarm } from '../controllers/farmerController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();

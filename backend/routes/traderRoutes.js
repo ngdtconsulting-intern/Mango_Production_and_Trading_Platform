@@ -1,11 +1,5 @@
 import express from 'express';
-import {
-  createBuyingRequirement,
-  getBuyingRequirements,
-  getBuyingRequirementById,
-  addResponse,
-  getFarmerDirectory,
-} from '../controllers/traderController.js';
+import { createBuyingRequirement, getBuyingRequirements, getBuyingRequirementById, addResponse, getFarmerDirectory } from '../controllers/traderController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();

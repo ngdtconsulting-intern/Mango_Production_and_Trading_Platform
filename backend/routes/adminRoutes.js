@@ -1,10 +1,5 @@
 import express from 'express';
-import {
-  getDashboardStats,
-  getUserManagement,
-  toggleUserStatus,
-  getAnalyticsReport,
-} from '../controllers/adminController.js';
+import { getDashboardStats, getUserManagement, toggleUserStatus, getAnalyticsReport } from '../controllers/adminController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();

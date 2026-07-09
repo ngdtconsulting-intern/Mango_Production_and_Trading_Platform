@@ -66,29 +66,18 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+// DO NOT use async with next - use one or the other
+userSchema.pre('save', async function () {
+  // Only hash if password is modified
+  if (!this.isModified('password')) return;
 
-  try {
-    const salt = await bcryptjs.genSalt(10);
-    this.password = await bcryptjs.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+  const salt = await bcryptjs.genSalt(10);
+  this.password = await bcryptjs.hash(this.password, salt);
 });
 
 // Compare passwords
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcryptjs.compare(enteredPassword, this.password);
-};
-
-// Get JWT token
-userSchema.methods.getSignedToken = function () {
-  const jwt = require('jsonwebtoken');
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
-  });
 };
 
 export default mongoose.model('User', userSchema);

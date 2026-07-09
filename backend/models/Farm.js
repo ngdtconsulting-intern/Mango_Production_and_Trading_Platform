@@ -10,7 +10,6 @@ const farmSchema = new mongoose.Schema(
     farmName: { type: String, required: true, trim: true },
     description: String,
 
-    // Location
     location: {
       ward: Number,
       tole: String,
@@ -20,13 +19,11 @@ const farmSchema = new mongoose.Schema(
       longitude: Number,
     },
 
-    // Area
     orchardAreaKatha: Number,
     orchardAreaHectare: Number,
     totalTreeCount: Number,
     bearingTreeCount: Number,
 
-    // Varieties
     varieties: [
       {
         name: String,
@@ -34,7 +31,6 @@ const farmSchema = new mongoose.Schema(
       },
     ],
 
-    // Tree Age Distribution
     treeAgeDistribution: {
       '1-3': { type: Number, default: 0 },
       '4-5': { type: Number, default: 0 },
@@ -45,7 +41,6 @@ const farmSchema = new mongoose.Schema(
       '40+': { type: Number, default: 0 },
     },
 
-    // Environment
     soilType: {
       type: String,
       enum: ['loamy', 'sandy', 'clay', 'mixed'],
@@ -62,27 +57,23 @@ const farmSchema = new mongoose.Schema(
       default: 'rainfed',
     },
 
-    // Production
     lastHarvestDate: Date,
     lastHarvestQuantityKg: Number,
     lastHarvestRevenuNPR: Number,
 
-    // Certifications
     certifications: [String],
 
-    // Status
     active: { type: Boolean, default: true },
     verified: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-// Calculate hectare
-farmSchema.pre('save', function (next) {
+// No next() - just use async without it
+farmSchema.pre('save', async function () {
   if (this.orchardAreaKatha) {
-    this.orchardAreaHectare = (this.orchardAreaKatha * 0.0338).toFixed(4);
+    this.orchardAreaHectare = parseFloat((this.orchardAreaKatha * 0.0338).toFixed(4));
   }
-  next();
 });
 
 export default mongoose.model('Farm', farmSchema);

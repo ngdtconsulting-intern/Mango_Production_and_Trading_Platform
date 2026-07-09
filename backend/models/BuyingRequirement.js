@@ -8,12 +8,10 @@ const buyingRequirementSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Product
     variety: { type: String, required: true },
     quantityMT: { type: Number, required: true, min: 0.1 },
     quantityKg: Number,
 
-    // Quality & Location
     quality: {
       type: String,
       enum: ['premium', 'good', 'fair'],
@@ -25,23 +23,19 @@ const buyingRequirementSchema = new mongoose.Schema(
       ward: Number,
     },
 
-    // Pricing
     budget: {
       minPricePerKg: Number,
       maxPricePerKg: Number,
       negotiable: { type: Boolean, default: true },
     },
 
-    // Timeline
     requiredByDate: Date,
 
-    // Contact
     contact: {
       phone: String,
       email: String,
     },
 
-    // Responses
     responses: [
       {
         farmerId: mongoose.Schema.Types.ObjectId,
@@ -49,12 +43,15 @@ const buyingRequirementSchema = new mongoose.Schema(
         availableQuantityKg: Number,
         proposedPricePerKg: Number,
         message: String,
-        status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
+        status: {
+          type: String,
+          enum: ['pending', 'accepted', 'rejected'],
+          default: 'pending',
+        },
         respondedAt: { type: Date, default: Date.now },
       },
     ],
 
-    // Status
     status: {
       type: String,
       enum: ['open', 'in-progress', 'completed', 'cancelled'],
@@ -67,10 +64,9 @@ const buyingRequirementSchema = new mongoose.Schema(
   { timestamps: true, indexes: [{ traderId: 1 }, { status: 1 }, { variety: 1 }] }
 );
 
-// Calculate kg from MT
-buyingRequirementSchema.pre('save', function (next) {
+// No next() needed
+buyingRequirementSchema.pre('save', async function () {
   this.quantityKg = this.quantityMT * 1000;
-  next();
 });
 
 export default mongoose.model('BuyingRequirement', buyingRequirementSchema);

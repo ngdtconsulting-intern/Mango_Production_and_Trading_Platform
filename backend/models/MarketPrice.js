@@ -35,10 +35,9 @@ const marketPriceSchema = new mongoose.Schema(
   { timestamps: true, indexes: [{ market: 1, variety: 1, date: -1 }] }
 );
 
-// Calculate average price
-marketPriceSchema.pre('save', function (next) {
+// No next() needed
+marketPriceSchema.pre('save', async function () {
   this.avgPrice = (this.wholesalePricePerKg + this.retailPricePerKg) / 2;
-  next();
 });
 
 export default mongoose.model('MarketPrice', marketPriceSchema);

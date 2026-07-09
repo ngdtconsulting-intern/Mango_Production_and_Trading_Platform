@@ -4,12 +4,15 @@ const productionSchema = new mongoose.Schema(
   {
     surveyId: mongoose.Schema.Types.ObjectId,
     farmId: mongoose.Schema.Types.ObjectId,
-    farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    farmerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
 
     season: String,
     year: Number,
 
-    // Pre-Flowering Phase (Nov-Dec)
     preFlowering: {
       pruned: Boolean,
       pruningDate: Date,
@@ -17,21 +20,18 @@ const productionSchema = new mongoose.Schema(
       chemicalFertilizerKg: Number,
     },
 
-    // Flowering Phase (Feb-Mar)
     flowering: {
       flowerDensity: { type: String, enum: ['high', 'medium', 'low'] },
       pestPresence: Boolean,
       pestType: String,
     },
 
-    // Fruit Development Phase (Apr-May)
     fruitDevelopment: {
       estimatedFruitCount: Number,
       fruitDropPercentage: Number,
       fruitSizeEstimate: String,
     },
 
-    // Harvest Phase
     harvest: {
       harvestDate: Date,
       totalQuantityKg: Number,
@@ -40,7 +40,6 @@ const productionSchema = new mongoose.Schema(
       gradeC: Number,
     },
 
-    // Yield
     predictedYieldKg: Number,
     actualYieldKg: Number,
     costPerKg: Number,
@@ -54,5 +53,7 @@ const productionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// No pre-save hook needed for this model
 
 export default mongoose.model('Production', productionSchema);
