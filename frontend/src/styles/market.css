@@ -1,0 +1,119 @@
+.market-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.market-header h1 {
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+
+.market-header p {
+  color: var(--color-bark);
+  margin-bottom: 24px;
+}
+
+.market-filters {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-group label {
+  margin: 0;
+}
+
+.loading {
+  color: var(--color-bark);
+  font-style: italic;
+}
+
+.price-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.price-card {
+  position: relative;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  overflow: hidden;
+}
+
+.price-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-ripen);
+}
+
+.price-card h3 {
+  font-size: 17px;
+  margin-bottom: 12px;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.price-row:last-child { border-bottom: none; }
+
+.price-row strong {
+  font-family: var(--font-mono);
+  color: var(--color-ink);
+}
+
+.supply-info {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.supply-badge, .quality-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.supply-badge.abundant { background: #e4f2e9; color: var(--color-orchard-dark); }
+.supply-badge.normal   { background: #eef1ec; color: var(--color-bark); }
+.supply-badge.scarce   { background: #fbeaea; color: var(--color-clay); }
+
+.quality-badge.premium { background: #fdf1de; color: var(--color-gold-dark); }
+.quality-badge.good    { background: #e4f2e9; color: var(--color-orchard-dark); }
+.quality-badge.fair    { background: #eef1ec; color: var(--color-bark); }
+.quality-badge.poor    { background: #fbeaea; color: var(--color-clay); }
+
+.chart-section {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+}
+
+.chart-section h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+}

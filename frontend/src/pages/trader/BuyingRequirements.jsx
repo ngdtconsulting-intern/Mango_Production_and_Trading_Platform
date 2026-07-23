@@ -26,17 +26,17 @@ export default function BuyingRequirements() {
   }, [requirements, filters]);
 
   const fetchRequirements = async () => {
-    try {
-      const response = await api.get('/buying-requirements', {
-        params: { status: 'open', limit: 100 },
-      });
-      setRequirements(response.data.data);
-    } catch (error) {
-      console.error('Error fetching requirements:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const response = await api.get('/traders/requirements', {
+      params: { status: 'open', limit: 100 },
+    });
+    setRequirements(response.data.requirements);
+  } catch (error) {
+    console.error('Error fetching requirements:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const filterRequirements = () => {
     let filtered = requirements;
@@ -181,7 +181,7 @@ function ApplicationForm({ requirement, onClose }) {
     setLoading(true);
 
     try {
-      await api.post(`/buying-requirements/${requirement._id}/respond`, formData);
+      await api.post(`/traders/requirements/${requirement._id}/respond`, formData);
       alert('Application submitted successfully!');
       onClose();
     } catch (error) {

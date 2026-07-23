@@ -65,6 +65,36 @@ export const getBuyingRequirements = async (req, res) => {
   }
 };
 
+export const getMyRequirements = async (req, res) => {
+  try {
+    const { status, page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    const filter = { traderId: req.user.id };
+    if (status) filter.status = status;
+
+    const requirements = await BuyingRequirement.find(filter)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await BuyingRequirement.countDocuments(filter);
+
+    res.json({
+      success: true,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / limit),
+      requirements,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export const getBuyingRequirementById = async (req, res) => {
   try {
     const requirement = await BuyingRequirement.findByIdAndUpdate(
@@ -140,11 +170,20 @@ export const addResponse = async (req, res) => {
 
 export const getFarmerDirectory = async (req, res) => {
   try {
-    const { district, page = 1, limit = 10 } = req.query;
+    const { district, search, page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
     const filter = { role: 'farmer', active: true };
     if (district) filter['address.district'] = district;
+
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      filter.$or = [
+        { name: searchRegex },
+        { 'address.municipality': searchRegex },
+        { 'address.tole': searchRegex },
+      ];
+    }
 
     const farmers = await User.find(filter)
       .select('-password')
@@ -153,7 +192,6 @@ export const getFarmerDirectory = async (req, res) => {
 
     const total = await User.countDocuments(filter);
 
-    // Get survey data for each farmer
     const farmersWithData = await Promise.all(
       farmers.map(async (farmer) => {
         const survey = await Survey.findOne({ farmerId: farmer._id }).sort({
@@ -172,7 +210,7 @@ export const getFarmerDirectory = async (req, res) => {
       total,
       page: parseInt(page),
       pages: Math.ceil(total / limit),
-      farmers: farmersWithData,
+      data: farmersWithData,
     });
   } catch (error) {
     res.status(500).json({
@@ -182,10 +220,84 @@ export const getFarmerDirectory = async (req, res) => {
   }
 };
 
+export const getFarmerProfile = async (req, res) => {
+  try {
+    const farmer = await User.findOne({
+      _id: req.params.id,
+      role: 'farmer',
+    }).select('-password');
+
+    if (!farmer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Farmer not found',
+      });
+    }
+
+    const surveys = await Survey.find({ farmerId: farmer._id }).sort({ createdAt: -1 });
+    const latestSurvey = surveys[0];
+
+    res.json({
+      success: true,
+      data: {
+        farmer,
+        statistics: {
+          recentProduction: latestSurvey?.totalProductionKg || 0,
+          recentEarnings: latestSurvey?.totalEarnings2082 || 0,
+          totalSurveys: surveys.length,
+        },
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const updateResponseStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const requirement = await BuyingRequirement.findById(req.params.id);
+
+    if (!requirement) {
+      return res.status(404).json({ success: false, message: 'Requirement not found' });
+    }
+
+    if (requirement.traderId.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Not authorized to manage this requirement' });
+    }
+
+    const response = requirement.responses.id(req.params.responseId);
+    if (!response) {
+      return res.status(404).json({ success: false, message: 'Response not found' });
+    }
+
+    response.status = status;
+    if (status === 'accepted') {
+      requirement.status = 'in-progress';
+    }
+
+    await requirement.save();
+
+    res.json({
+      success: true,
+      message: `Response ${status}`,
+      requirement,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export default {
   createBuyingRequirement,
   getBuyingRequirements,
+  getMyRequirements,
   getBuyingRequirementById,
   addResponse,
   getFarmerDirectory,
+  getFarmerProfile,
+  updateResponseStatus,
 };

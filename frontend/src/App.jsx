@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getCurrentUser } from './store/authSlice';
-
+import Navbar from './components/Navbar';
 // Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -11,11 +11,14 @@ import Register from './pages/auth/Register';
 import FarmerDashboard from './pages/farmer/Dashboard';
 import SurveyForm from './pages/farmer/SurveyForm';
 import MarketPrices from './pages/farmer/MarketPrices';
+import AddFarm from './pages/farmer/AddFarm';
 
 // Trader Pages
 import TraderDashboard from './pages/trader/Dashboard';
 import BuyingRequirements from './pages/trader/BuyingRequirements';
 import FarmerDirectory from './pages/trader/FarmerDirectory';
+import CreateRequirement from './pages/trader/CreateRequirement';
+import RequirementDetail from './pages/trader/RequirementDetail';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -32,7 +35,12 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return (
+    <>
+      <Navbar />
+      {children}
+    </>
+  );
 };
 
 function App() {
@@ -70,6 +78,14 @@ function App() {
           }
         />
         <Route
+  path="/farmer/farms/new"
+  element={
+    <ProtectedRoute requiredRole={['farmer']}>
+      <AddFarm />
+    </ProtectedRoute>
+  }
+/>
+        <Route
           path="/farmer/market"
           element={
             <ProtectedRoute requiredRole={['farmer']}>
@@ -95,6 +111,22 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+  path="/trader/requirements/create"
+  element={
+    <ProtectedRoute requiredRole={['trader']}>
+      <CreateRequirement />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/trader/requirements/:id"
+  element={
+    <ProtectedRoute requiredRole={['trader']}>
+      <RequirementDetail />
+    </ProtectedRoute>
+  }
+/>
         <Route
           path="/trader/directory"
           element={

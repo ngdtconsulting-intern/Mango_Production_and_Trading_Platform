@@ -92,7 +92,14 @@ export const getPrices = async (req, res) => {
 
 export const getLatestPrices = async (req, res) => {
   try {
+    const { market, variety } = req.query;
+
+    const match = {};
+    if (market) match.market = market;
+    if (variety) match.variety = variety;
+
     const latestPrices = await MarketPrice.aggregate([
+      { $match: match },
       { $sort: { market: 1, variety: 1, date: -1 } },
       {
         $group: {
@@ -103,15 +110,40 @@ export const getLatestPrices = async (req, res) => {
       { $replaceRoot: { newRoot: '$latest' } },
     ]);
 
-    res.json({
-      success: true,
-      prices: latestPrices,
-    });
+    const data = latestPrices.map((p) => ({
+      ...p,
+      avgPrice: (p.wholesalePricePerKg + p.retailPricePerKg) / 2,
+    }));
+
+    res.json({ success: true, data });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getPriceTrends = async (req, res) => {
+  try {
+    const { market, variety, days = 30 } = req.query;
+
+    const filter = {};
+    if (market) filter.market = market;
+    if (variety) filter.variety = variety;
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(days));
+    filter.date = { $gte: startDate };
+
+    const prices = await MarketPrice.find(filter).sort({ date: 1 });
+
+    const priceData = prices.map((p) => ({
+      date: p.date,
+      wholesale: p.wholesalePricePerKg,
+      retail: p.retailPricePerKg,
+    }));
+
+    res.json({ success: true, data: { priceData } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -148,4 +180,5 @@ export default {
   getPrices,
   getLatestPrices,
   getPriceComparison,
+  getPriceTrends,
 };
