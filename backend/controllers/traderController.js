@@ -291,13 +291,44 @@ export const updateResponseStatus = async (req, res) => {
   }
 };
 
+export const updateRequirementStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const allowedStatuses = ['in-progress', 'completed', 'cancelled'];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status must be one of: ${allowedStatuses.join(', ')}`,
+      });
+    }
+
+    const requirement = await BuyingRequirement.findById(req.params.id);
+    if (!requirement) {
+      return res.status(404).json({ success: false, message: 'Requirement not found' });
+    }
+
+    if (requirement.traderId.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Not authorized to manage this requirement' });
+    }
+
+    requirement.status = status;
+    await requirement.save();
+
+    res.json({ success: true, message: `Requirement marked as ${status}`, requirement });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export default {
   createBuyingRequirement,
   getBuyingRequirements,
   getMyRequirements,
   getBuyingRequirementById,
   addResponse,
+  updateResponseStatus,
+  updateRequirementStatus,
   getFarmerDirectory,
   getFarmerProfile,
-  updateResponseStatus,
 };

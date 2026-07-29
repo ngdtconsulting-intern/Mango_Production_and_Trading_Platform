@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getCurrentUser } from './store/authSlice';
 import Navbar from './components/Navbar';
+import { checkSurveyStatus } from './store/surveySlice';
 // Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -25,7 +26,16 @@ import AdminDashboard from './pages/admin/Dashboard';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
+  const dispatch = useDispatch();
+  const location = useLocation();
   const { user } = useSelector((state) => state.auth);
+  const { hasSurvey, checking } = useSelector((state) => state.survey);
+
+  useEffect(() => {
+    if (user?.role === 'farmer' && hasSurvey === null) {
+      dispatch(checkSurveyStatus());
+    }
+  }, [user, hasSurvey, dispatch]);
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -33,6 +43,17 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (requiredRole && !requiredRole.includes(user.role)) {
     return <Navigate to="/" replace />;
+  }
+
+  const isSurveyPage = location.pathname === '/farmer/survey';
+
+  if (user.role === 'farmer' && !isSurveyPage) {
+    if (checking || hasSurvey === null) {
+      return <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>;
+    }
+    if (hasSurvey === false) {
+      return <Navigate to="/farmer/survey" replace />;
+    }
   }
 
   return (
@@ -54,8 +75,8 @@ function App() {
   }, [dispatch]);
 
   return (
-    <Router>
-      <Routes>
+  <BrowserRouter>
+        <Routes>
         {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -150,7 +171,7 @@ function App() {
         <Route path="/" element={<Navigate to="/farmer/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
 

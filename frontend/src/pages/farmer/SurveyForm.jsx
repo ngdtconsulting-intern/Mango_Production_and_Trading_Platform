@@ -3,12 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import '../../styles/forms.css';
+import { useDispatch } from 'react-redux';
+import { checkSurveyStatus } from '../../store/surveySlice';
 
 const EDUCATION_LEVELS = ['None', 'Primary', 'Secondary', 'Higher Secondary', 'Bachelor', 'Master or above'];
 const TREE_AGE_RANGES = ['1-3', '4-5', '6-10', '11-15', '16-25', '26-40', '40+'];
+const PROVINCE_DISTRICTS = {
+  Koshi: ['Bhojpur', 'Dhankuta', 'Ilam', 'Jhapa', 'Khotang', 'Morang', 'Okhaldhunga', 'Panchthar', 'Sankhuwasabha', 'Solukhumbu', 'Sunsari', 'Taplejung', 'Tehrathum', 'Udayapur'],
+  Madhesh: ['Bara', 'Dhanusha', 'Mahottari', 'Parsa', 'Rautahat', 'Saptari', 'Sarlahi', 'Siraha'],
+  Bagmati: ['Bhaktapur', 'Chitwan', 'Dhading', 'Dolakha', 'Kathmandu', 'Kavrepalanchowk', 'Lalitpur', 'Makwanpur', 'Nuwakot', 'Ramechhap', 'Rasuwa', 'Sindhuli', 'Sindhupalchowk'],
+  Gandaki: ['Baglung', 'Gorkha', 'Kaski', 'Lamjung', 'Manang', 'Mustang', 'Myagdi', 'Nawalpur', 'Parbat', 'Syangja', 'Tanahun'],
+  Lumbini: ['Arghakhanchi', 'Banke', 'Bardiya', 'Dang', 'Gulmi', 'Kapilvastu', 'Parasi', 'Palpa', 'Pyuthan', 'Rolpa', 'Rukum East', 'Rupandehi'],
+  Karnali: ['Dailekh', 'Dolpa', 'Humla', 'Jajarkot', 'Jumla', 'Kalikot', 'Mugu', 'Rukum West', 'Salyan', 'Surkhet'],
+  Sudurpashchim: ['Achham', 'Baitadi', 'Bajhang', 'Bajura', 'Dadeldhura', 'Darchula', 'Doti', 'Kailali', 'Kanchanpur'],
+};
 
 export default function SurveyForm() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -19,6 +31,9 @@ export default function SurveyForm() {
     educationLevel: EDUCATION_LEVELS[0],
 
     // Address
+    province: '',
+district: '',
+municipality: '',
     wardNumber: '',
     tole: '',
 
@@ -91,6 +106,7 @@ export default function SurveyForm() {
         treeAgeDistribution,
       });
       toast.success('Survey submitted successfully');
+      dispatch(checkSurveyStatus());
       navigate('/farmer/dashboard');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to submit survey');
@@ -127,17 +143,51 @@ export default function SurveyForm() {
         </div>
 
         <h3 className="form-section">Address</h3>
-        <div className="form-grid">
-          <div>
-            <label>Ward Number</label>
-            <input type="number" name="wardNumber" min="1" value={formData.wardNumber} onChange={handleChange} required />
-          </div>
-          <div>
-            <label>Tole</label>
-            <input type="text" name="tole" value={formData.tole} onChange={handleChange} required />
-          </div>
-        </div>
-
+<div className="form-grid">
+  <div>
+    <label>Province</label>
+    <select
+      name="province"
+      value={formData.province}
+      onChange={(e) => setFormData({ ...formData, province: e.target.value, district: '' })}
+      required
+    >
+      <option value="">Select Province</option>
+      {Object.keys(PROVINCE_DISTRICTS).map((p) => (
+        <option key={p} value={p}>{p}</option>
+      ))}
+    </select>
+  </div>
+  <div>
+    <label>District</label>
+    <select
+      name="district"
+      value={formData.district}
+      onChange={handleChange}
+      required
+      disabled={!formData.province}
+    >
+      <option value="">
+        {formData.province ? 'Select District' : 'Select province first'}
+      </option>
+      {(PROVINCE_DISTRICTS[formData.province] || []).map((d) => (
+        <option key={d} value={d}>{d}</option>
+      ))}
+    </select>
+  </div>
+  <div>
+    <label>Municipality</label>
+    <input type="text" name="municipality" value={formData.municipality} onChange={handleChange} required />
+  </div>
+  <div>
+    <label>Ward Number</label>
+    <input type="number" name="wardNumber" min="1" value={formData.wardNumber} onChange={handleChange} required />
+  </div>
+  <div>
+    <label>Tole</label>
+    <input type="text" name="tole" value={formData.tole} onChange={handleChange} required />
+  </div>
+</div>
         <h3 className="form-section">Household & Orchard</h3>
         <div className="form-grid">
           <div>

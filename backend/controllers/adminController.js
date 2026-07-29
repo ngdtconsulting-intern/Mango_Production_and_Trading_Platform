@@ -3,6 +3,7 @@ import Survey from '../models/Survey.js';
 import BuyingRequirement from '../models/BuyingRequirement.js';
 import MarketPrice from '../models/MarketPrice.js';
 import logger from '../utils/logger.js';
+import Farm from '../models/Farm.js';
 
 export const getDashboardStats = async (req, res) => {
   try {
@@ -35,10 +36,10 @@ export const getDashboardStats = async (req, res) => {
 
 export const getUserManagement = async (req, res) => {
   try {
-    const { role, page = 1, limit = 10 } = req.query;
+    const { role, page = 1, limit = 20 } = req.query;
     const skip = (page - 1) * limit;
 
-    const filter = { active: true };
+    const filter = {};
     if (role) filter.role = role;
 
     const users = await User.find(filter)
@@ -49,18 +50,60 @@ export const getUserManagement = async (req, res) => {
 
     const total = await User.countDocuments(filter);
 
+    const enrichedUsers = await Promise.all(
+      users.map(async (u) => {
+        if (u.role !== 'farmer') return u.toObject();
+
+        const latestSurvey = await Survey.findOne({ farmerId: u._id }).sort({ createdAt: -1 });
+
+        return {
+          ...u.toObject(),
+          location: latestSurvey
+            ? {
+                province: latestSurvey.province,
+                district: latestSurvey.district,
+                municipality: latestSurvey.municipality,
+              }
+            : null,
+          surveyStatus: latestSurvey ? latestSurvey.status : 'none',
+        };
+      })
+    );
+
     res.json({
       success: true,
       total,
       page: parseInt(page),
       pages: Math.ceil(total / limit),
-      users,
+      users: enrichedUsers,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getUserDetails = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    let details = {};
+
+    if (user.role === 'farmer') {
+      const farms = await Farm.find({ userId: user._id }).sort({ createdAt: -1 });
+      const surveys = await Survey.find({ farmerId: user._id }).sort({ createdAt: -1 });
+      details = { farms, surveys };
+    } else if (user.role === 'trader') {
+      const requirements = await BuyingRequirement.find({ traderId: user._id }).sort({ createdAt: -1 });
+      details = { requirements };
+    }
+
+    res.json({ success: true, user, details });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -135,4 +178,5 @@ export default {
   getUserManagement,
   toggleUserStatus,
   getAnalyticsReport,
+  getUserDetails,
 };

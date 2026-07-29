@@ -18,8 +18,11 @@ const surveySchema = new mongoose.Schema(
     educationLevel: { type: String, required: true },
 
     // Address
-    wardNumber: { type: Number, required: true },
-    tole: { type: String, required: true },
+province: { type: String, required: true },
+district: { type: String, required: true },
+municipality: { type: String, required: true },
+wardNumber: { type: Number, required: true },
+tole: { type: String, required: true },
 
     // Household
     householdMembers: { type: Number, required: true, min: 1 },

@@ -193,3 +193,134 @@
 }
 
 .admin-table tr:last-child td { border-bottom: none; }
+/* User details modal */
+.admin-table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(42, 31, 20, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--color-surface);
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  max-width: 560px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-md);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.modal-header h2 { margin: 0; font-size: 20px; }
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--color-bark);
+  line-height: 1;
+}
+
+.detail-section {
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.detail-section p { font-size: 14px; margin: 4px 0; }
+
+.detail-heading { font-size: 16px; margin: 20px 0 10px; }
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--color-bark);
+}
+
+.detail-item strong { color: var(--color-ink); font-size: 14px; }
+
+.detail-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.empty-message-small {
+  font-size: 13px;
+  color: var(--color-bark);
+  margin-bottom: 12px;
+}
+/* Survey review modal */
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.detail-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.detail-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-bark);
+}
+
+.tree-age-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.tree-age-tag {
+  background: var(--color-bg);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--color-ink);
+}
+
+.detail-note {
+  font-size: 13px;
+  color: var(--color-ink);
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin: 6px 0;
+}

@@ -1,5 +1,5 @@
 import express from 'express';
-import { createBuyingRequirement, getBuyingRequirements, getMyRequirements, getBuyingRequirementById, addResponse, updateResponseStatus, getFarmerDirectory, getFarmerProfile } from '../controllers/traderController.js';
+import { createBuyingRequirement, getBuyingRequirements, getMyRequirements, getBuyingRequirementById, addResponse, updateResponseStatus, getFarmerDirectory, getFarmerProfile,updateRequirementStatus } from '../controllers/traderController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -9,6 +9,7 @@ router.get('/requirements', getBuyingRequirements);
 router.get('/requirements/my-requirements', protect, authorize('trader'), getMyRequirements);
 router.get('/requirements/:id', getBuyingRequirementById);
 router.post('/requirements/:id/respond', protect, authorize('farmer'), addResponse);
+router.patch('/requirements/:id/status', protect, authorize('trader'), updateRequirementStatus);
 router.patch('/requirements/:id/responses/:responseId', protect, authorize('trader'), updateResponseStatus);
 router.get('/farmers', getFarmerDirectory);
 router.get('/farmers/:id', getFarmerProfile);

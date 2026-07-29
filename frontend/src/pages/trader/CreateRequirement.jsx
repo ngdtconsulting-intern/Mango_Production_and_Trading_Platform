@@ -6,6 +6,15 @@ import '../../styles/trader.css';
 
 const VARIETIES = ['Maldaha', 'Amrapali', 'Sindhure', 'Langra', 'Dusehri', 'Chaunsa'];
 const DISTRICTS = ['Saptari', 'Siraha', 'Mahottari', 'Dhanusha', 'Janakpur'];
+const PROVINCE_DISTRICTS = {
+  Koshi: ['Bhojpur', 'Dhankuta', 'Ilam', 'Jhapa', 'Khotang', 'Morang', 'Okhaldhunga', 'Panchthar', 'Sankhuwasabha', 'Solukhumbu', 'Sunsari', 'Taplejung', 'Tehrathum', 'Udayapur'],
+  Madhesh: ['Bara', 'Dhanusha', 'Mahottari', 'Parsa', 'Rautahat', 'Saptari', 'Sarlahi', 'Siraha'],
+  Bagmati: ['Bhaktapur', 'Chitwan', 'Dhading', 'Dolakha', 'Kathmandu', 'Kavrepalanchowk', 'Lalitpur', 'Makwanpur', 'Nuwakot', 'Ramechhap', 'Rasuwa', 'Sindhuli', 'Sindhupalchowk'],
+  Gandaki: ['Baglung', 'Gorkha', 'Kaski', 'Lamjung', 'Manang', 'Mustang', 'Myagdi', 'Nawalpur', 'Parbat', 'Syangja', 'Tanahun'],
+  Lumbini: ['Arghakhanchi', 'Banke', 'Bardiya', 'Dang', 'Gulmi', 'Kapilvastu', 'Parasi', 'Palpa', 'Pyuthan', 'Rolpa', 'Rukum East', 'Rupandehi'],
+  Karnali: ['Dailekh', 'Dolpa', 'Humla', 'Jajarkot', 'Jumla', 'Kalikot', 'Mugu', 'Rukum West', 'Salyan', 'Surkhet'],
+  Sudurpashchim: ['Achham', 'Baitadi', 'Bajhang', 'Bajura', 'Dadeldhura', 'Darchula', 'Doti', 'Kailali', 'Kanchanpur'],
+};
 
 export default function CreateRequirement() {
   const navigate = useNavigate();
@@ -36,9 +45,10 @@ export default function CreateRequirement() {
         quantityMT: Number(formData.quantityMT),
         quality: formData.quality,
         location: {
-          district: formData.district,
-          municipality: formData.municipality,
-        },
+  province: formData.province,
+  district: formData.district,
+  municipality: formData.municipality,
+},
         budget: {
           minPricePerKg: Number(formData.minPricePerKg),
           maxPricePerKg: Number(formData.maxPricePerKg),
@@ -88,11 +98,35 @@ export default function CreateRequirement() {
         </div>
 
         <div className="form-group">
-          <label>District</label>
-          <select name="district" value={formData.district} onChange={handleChange}>
-            {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-        </div>
+  <label>Province</label>
+  <select
+    name="province"
+    value={formData.province}
+    onChange={(e) => setFormData({ ...formData, province: e.target.value, district: '' })}
+    required
+  >
+    <option value="">Select Province</option>
+    {Object.keys(PROVINCE_DISTRICTS).map((p) => (
+      <option key={p} value={p}>{p}</option>
+    ))}
+  </select>
+</div>
+
+<div className="form-group">
+  <label>District</label>
+  <select
+    name="district"
+    value={formData.district}
+    onChange={handleChange}
+    required
+    disabled={!formData.province}
+  >
+    <option value="">{formData.province ? 'Select District' : 'Select province first'}</option>
+    {(PROVINCE_DISTRICTS[formData.province] || []).map((d) => (
+      <option key={d} value={d}>{d}</option>
+    ))}
+  </select>
+</div>
 
         <div className="form-group">
           <label>Municipality</label>
