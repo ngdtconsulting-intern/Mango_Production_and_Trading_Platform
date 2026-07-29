@@ -7,7 +7,7 @@ import { checkSurveyStatus } from './store/surveySlice';
 // Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
-
+import Home from './pages/Home';
 // Farmer Pages
 import FarmerDashboard from './pages/farmer/Dashboard';
 import SurveyForm from './pages/farmer/SurveyForm';
@@ -62,6 +62,11 @@ const ProtectedRoute = ({ children, requiredRole }) => {
       {children}
     </>
   );
+};
+const RootRoute = () => {
+  const { user } = useSelector((state) => state.auth);
+  if (!user) return <Home />;
+  return <Navigate to={`/${user.role}/dashboard`} replace />;
 };
 
 function App() {
@@ -168,7 +173,7 @@ function App() {
         />
 
         {/* Default Routes */}
-        <Route path="/" element={<Navigate to="/farmer/dashboard" replace />} />
+        <Route path="/" element={<RootRoute />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
