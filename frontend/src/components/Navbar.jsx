@@ -15,7 +15,6 @@ const NAV_LINKS = {
   trader: [
     { to: '/trader/dashboard', label: 'Dashboard' },
     { to: '/trader/requirements/create', label: 'Post Requirement' },
-    { to: '/trader/directory', label: 'Farmer Directory' },
   ],
   admin: [
     { to: '/admin/dashboard', label: 'Dashboard' },

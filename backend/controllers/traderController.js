@@ -38,12 +38,12 @@ export const getBuyingRequirements = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const filter = { status: { $ne: 'cancelled' } };
-
     if (status) filter.status = status;
     if (variety) filter.variety = variety;
     if (district) filter['location.district'] = district;
 
     const requirements = await BuyingRequirement.find(filter)
+      .select('-responses')
       .skip(skip)
       .limit(parseInt(limit))
       .sort({ createdAt: -1 });
@@ -58,10 +58,7 @@ export const getBuyingRequirements = async (req, res) => {
       requirements,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -101,24 +98,44 @@ export const getBuyingRequirementById = async (req, res) => {
       req.params.id,
       { $inc: { viewCount: 1 } },
       { new: true }
-    );
+    ).lean();
 
     if (!requirement) {
-      return res.status(404).json({
-        success: false,
-        message: 'Buying requirement not found',
+      return res.status(404).json({ success: false, message: 'Buying requirement not found' });
+    }
+
+    const isOwnerTrader = req.user.role === 'trader' && requirement.traderId.toString() === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+
+    if (isOwnerTrader || isAdmin) {
+      // Trader who owns this requirement (or admin) sees every request,
+      // but farmer contact info is only attached once a request is accepted.
+      requirement.responses = await Promise.all(
+        requirement.responses.map(async (r) => {
+          if (r.status === 'accepted') {
+            const farmer = await User.findById(r.farmerId).select('phone email');
+            return { ...r, farmerPhone: farmer?.phone, farmerEmail: farmer?.email };
+          }
+          return r;
+        })
+      );
+      return res.json({ success: true, requirement });
+    }
+
+    if (req.user.role === 'farmer') {
+      // A farmer only ever sees their own request, never anyone else's
+      const ownResponse = requirement.responses.find(
+        (r) => r.farmerId.toString() === req.user.id
+      );
+      return res.json({
+        success: true,
+        requirement: { ...requirement, responses: ownResponse ? [ownResponse] : [] },
       });
     }
 
-    res.json({
-      success: true,
-      requirement,
-    });
+    return res.json({ success: true, requirement: { ...requirement, responses: [] } });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
