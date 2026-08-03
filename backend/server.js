@@ -27,7 +27,6 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
 ].filter(Boolean);
-app.use('/api/chat', chatRoutes);
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -75,6 +74,9 @@ app.use('/api/admin', adminRoutes);
 // Analytics Routes
 import analyticsRoutes from './routes/analyticsRoutes.js';
 app.use('/api/analytics', analyticsRoutes);
+
+//Chat Routes
+app.use('/api/chat', chatRoutes);
 
 // ============================================
 // Health Check

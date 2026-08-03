@@ -2,11 +2,7 @@ import mongoose from 'mongoose';
 
 const marketPriceSchema = new mongoose.Schema(
   {
-    market: {
-      type: String,
-      required: true,
-      enum: ['Kalimati', 'Balkhu', 'Lahan', 'Janakpur', 'Hetauda', 'Bhaktapur', 'Kathmandu'],
-    },
+    market: { type: String, required: true },
     variety: { type: String, required: true },
     date: { type: Date, default: Date.now },
 

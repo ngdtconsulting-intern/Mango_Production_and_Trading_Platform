@@ -13,6 +13,8 @@ import FarmerDashboard from './pages/farmer/Dashboard';
 import SurveyForm from './pages/farmer/SurveyForm';
 import MarketPrices from './pages/farmer/MarketPrices';
 import AddFarm from './pages/farmer/AddFarm';
+import ChatBox from './pages/community/ChatBox';
+
 
 // Trader Pages
 import TraderDashboard from './pages/trader/Dashboard';
@@ -110,6 +112,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+  path="/farmer/community"
+  element={
+    <ProtectedRoute requiredRole={['farmer']}>
+      <ChatBox />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Trader Routes */}
         <Route

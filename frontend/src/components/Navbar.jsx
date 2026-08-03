@@ -11,6 +11,7 @@ const NAV_LINKS = {
     { to: '/farmer/survey', label: 'Survey' },
     { to: '/farmer/market', label: 'Market Prices' },
     { to: '/trader/requirements', label: 'Buying Requirements' },
+    { to: '/farmer/community', label: 'Community' },
   ],
   trader: [
     { to: '/trader/dashboard', label: 'Dashboard' },
