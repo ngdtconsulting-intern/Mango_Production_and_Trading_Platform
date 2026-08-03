@@ -128,8 +128,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-<<<<<<< HEAD
+<Route
           path="/trader/requirements/create"
           element={
             <ProtectedRoute requiredRole={['trader']}>
@@ -145,31 +144,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/trader/directory"
-          element={
-            <ProtectedRoute requiredRole={['trader']}>
-              <FarmerDirectory />
-            </ProtectedRoute>
-          }
-        />
-=======
-  path="/trader/requirements/create"
-  element={
-    <ProtectedRoute requiredRole={['trader']}>
-      <CreateRequirement />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/trader/requirements/:id"
-  element={
-    <ProtectedRoute requiredRole={['trader']}>
-      <RequirementDetail />
-    </ProtectedRoute>
-  }
-/>
->>>>>>> 1e66783aa8b4297465d09896ff65d6de06c22d50
 
         {/* Admin Routes */}
         <Route

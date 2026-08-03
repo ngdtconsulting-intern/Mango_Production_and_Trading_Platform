@@ -255,19 +255,12 @@
   padding: 12px 16px;
   margin-bottom: 24px;
 }
-<<<<<<< HEAD
-.status-guide p { font-size: 13px; color: var(--color-bark); margin: 4px 0; }
-
-@media (max-width: 768px) {
-  .filters-section { grid-template-columns: 1fr; }
-  .application-form { padding: 24px 20px; }
-}
-=======
 .status-guide p {
   font-size: 13px;
   color: var(--color-bark);
   margin: 4px 0;
 }
+
 /* Contact panel shown once a request is accepted */
 .contact-panel {
   margin-top: 14px;
@@ -283,4 +276,8 @@
   color: var(--color-bark);
   margin-bottom: 8px;
 }
->>>>>>> 1e66783aa8b4297465d09896ff65d6de06c22d50
+
+@media (max-width: 768px) {
+  .filters-section { grid-template-columns: 1fr; }
+  .application-form { padding: 24px 20px; }
+}
