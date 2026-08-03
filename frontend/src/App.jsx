@@ -17,7 +17,6 @@ import AddFarm from './pages/farmer/AddFarm';
 // Trader Pages
 import TraderDashboard from './pages/trader/Dashboard';
 import BuyingRequirements from './pages/trader/BuyingRequirements';
-import FarmerDirectory from './pages/trader/FarmerDirectory';
 import CreateRequirement from './pages/trader/CreateRequirement';
 import RequirementDetail from './pages/trader/RequirementDetail';
 
@@ -130,6 +129,7 @@ function App() {
           }
         />
         <Route
+<<<<<<< HEAD
           path="/trader/requirements/create"
           element={
             <ProtectedRoute requiredRole={['trader']}>
@@ -153,6 +153,23 @@ function App() {
             </ProtectedRoute>
           }
         />
+=======
+  path="/trader/requirements/create"
+  element={
+    <ProtectedRoute requiredRole={['trader']}>
+      <CreateRequirement />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/trader/requirements/:id"
+  element={
+    <ProtectedRoute requiredRole={['trader']}>
+      <RequirementDetail />
+    </ProtectedRoute>
+  }
+/>
+>>>>>>> 1e66783aa8b4297465d09896ff65d6de06c22d50
 
         {/* Admin Routes */}
         <Route

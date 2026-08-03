@@ -76,7 +76,7 @@ export default function TraderDashboard() {
                 style={{ cursor: 'pointer' }}
                 onClick={() => navigate(`/trader/requirements/${req._id}`)}
               >
-                <h4>{req.variety} — {req.status}</h4>
+                <h4>{req.variety} — {req.status === 'in-progress' ? 'Accepted' : req.status.charAt(0).toUpperCase() + req.status.slice(1)}</h4>
                 <p>{req.quantityMT} MT • {req.responseCount || 0} response(s)</p>
               </div>
             ))}
