@@ -3,9 +3,13 @@ import cors from 'cors';
 import compression from 'compression';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import http from 'http';
+import { initChatSocket } from './socket/chatSocket.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 // Load env FIRST before anything else
 dotenv.config();
+console.log(`[${process.env.CLOUDINARY_NAME}]`, `[${process.env.CLOUDINARY_API_KEY}]`, `[${process.env.CLOUDINARY_API_SECRET}]`);
 
 import { connectDB } from './config/database.js';
 import logger from './utils/logger.js';
@@ -23,7 +27,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
 ].filter(Boolean);
-
+app.use('/api/chat', chatRoutes);
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -97,7 +101,10 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = http.createServer(app);
+initChatSocket(server);
+
+server.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
   logger.info(`Health check: http://localhost:${PORT}/health`);
 });
