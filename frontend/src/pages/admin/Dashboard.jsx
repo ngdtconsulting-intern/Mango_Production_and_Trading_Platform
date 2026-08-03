@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
+import PageBanner from '../../components/PageBanner';
 import '../../styles/dashboard.css';
 
 export default function AdminDashboard() {
@@ -78,7 +79,12 @@ export default function AdminDashboard() {
 
   return (
     <div className="dashboard-container">
-      <h1>Admin Dashboard</h1>
+      <PageBanner
+        variant="admin"
+        eyebrow="⚙️ Admin dashboard"
+        title="Admin Dashboard"
+        subtitle="Verify farmer surveys, monitor platform-wide production and pricing, and manage user accounts."
+      />
 
       <div className="stats-grid">
         <div className="stat-card green">

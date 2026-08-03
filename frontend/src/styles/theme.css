@@ -1,19 +1,20 @@
 :root {
-  --mango-primary: #ff9f1c;
-  --mango-primary-dark: #e8850a;
-  --mango-green: #2d6a4f;
-  --mango-green-light: #40916c;
-  --mango-cream: #fff8ef;
-  --text-dark: #1f2937;
-  --text-muted: #6b7280;
-  --border: #e8e2d8;
-  --radius: 16px;
-  --shadow-sm: 0 4px 12px rgba(31, 41, 55, 0.06);
-  --shadow-lg: 0 20px 40px rgba(31, 41, 55, 0.12);
+  
+  --mango-primary: var(--color-gold);
+  --mango-primary-dark: var(--color-gold-dark);
+  --mango-green: var(--color-orchard);
+  --mango-green-light: #4a8f5c;
+  --mango-cream: var(--color-bg);
+  --text-dark: var(--color-ink);
+  --text-muted: var(--color-bark);
+  --border: var(--color-border);
+  --radius: var(--radius-lg);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-lg: var(--shadow-md);
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--text-dark); background: #fffdfa; }
+body { margin: 0; font-family: var(--font-body); color: var(--text-dark); }
 
 .text-gradient {
   background: linear-gradient(90deg, var(--mango-primary), var(--mango-green-light));
@@ -65,32 +66,45 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 
 /* ---------- Hero ---------- */
 .home__hero {
-  position: relative; text-align: center; padding: 90px 6vw 70px; overflow: hidden;
-  background: radial-gradient(ellipse at top, #fff3df 0%, #fffdfa 60%);
+  position: relative; text-align: center; padding: 130px 6vw 100px; overflow: hidden;
+  background-image:
+    linear-gradient(180deg, rgba(30, 74, 39, 0.82) 0%, rgba(30, 74, 39, 0.55) 45%, rgba(255, 253, 250, 0.97) 96%),
+    url('/images/hero-mango.jpg');
+  background-size: cover;
+  background-position: center 35%;
+  background-repeat: no-repeat;
+  color: #fff;
 }
 .home__hero-glow {
   position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
   width: 600px; height: 400px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,159,28,0.25), transparent 70%);
+  background: radial-gradient(circle, rgba(232,163,23,0.3), transparent 70%);
   filter: blur(20px); z-index: 0;
 }
 .home__eyebrow {
   position: relative; z-index: 1; display: inline-block; margin-bottom: 18px;
-  padding: 6px 16px; border-radius: 999px; background: #eafaf0; color: var(--mango-green);
-  font-weight: 600; font-size: 0.85rem;
+  padding: 6px 16px; border-radius: 999px; background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.35); backdrop-filter: blur(6px);
+  color: #fff; font-weight: 600; font-size: 0.85rem;
 }
 .home__hero h1 {
   position: relative; z-index: 1; font-size: clamp(2rem, 4.5vw, 3.2rem);
   line-height: 1.15; max-width: 900px; margin: 0 auto 20px; font-weight: 800;
+  color: #fff;
+}
+.home__hero h1::after { display: none; }
+.home__hero .text-gradient {
+  background: linear-gradient(90deg, var(--color-gold), #ffe4a3);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .home__hero-subtitle {
   position: relative; z-index: 1; max-width: 640px; margin: 0 auto 32px;
-  color: var(--text-muted); font-size: 1.08rem; line-height: 1.6;
+  color: rgba(255,255,255,0.9); font-size: 1.08rem; line-height: 1.6;
 }
 .home__hero-actions { position: relative; z-index: 1; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
 .home__hero-badges {
   position: relative; z-index: 1; display: flex; gap: 22px; justify-content: center;
-  flex-wrap: wrap; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;
+  flex-wrap: wrap; color: rgba(255,255,255,0.85); font-size: 0.9rem; font-weight: 500;
 }
 
 /* ---------- Stats ---------- */
@@ -132,9 +146,13 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 .home__step h3 { margin: 0 0 8px; }
 
 .home__cta {
-  text-align: center; padding: 70px 6vw; margin: 0 6vw 80px; border-radius: 28px;
-  background: linear-gradient(120deg, var(--mango-green), var(--mango-green-light));
-  color: #fff;
+  position: relative; text-align: center; padding: 70px 6vw; margin: 0 6vw 80px;
+  border-radius: 28px; overflow: hidden; color: #fff;
+  background-image:
+    linear-gradient(120deg, rgba(30,74,39,0.92), rgba(232,163,23,0.55)),
+    url('/images/cta-orchard.jpg');
+  background-size: cover;
+  background-position: center;
 }
 .home__cta h2 { font-size: 1.8rem; margin-bottom: 10px; }
 .home__cta p { opacity: 0.9; margin-bottom: 26px; }
@@ -148,7 +166,11 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 
 .auth-side {
   position: relative; overflow: hidden; padding: 56px 48px;
-  background: linear-gradient(150deg, var(--mango-green) 0%, var(--mango-green-light) 100%);
+  background-image:
+    linear-gradient(165deg, rgba(30,74,39,0.92) 0%, rgba(74,143,92,0.82) 100%),
+    url('/images/auth-bg.jpg');
+  background-size: cover;
+  background-position: center;
   color: #fff; display: flex; flex-direction: column; justify-content: center;
 }
 .auth-side__brand { color: #fff; text-decoration: none; font-weight: 800; display: flex; align-items: center; gap: 8px; margin-bottom: 40px; font-size: 1.1rem; }
@@ -168,7 +190,11 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 
 .status { padding: 12px 16px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 20px; }
 .status--error { background: #fdecea; color: #b3261e; border: 1px solid #f7c9c4; }
-
+.status--reminder {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  background: #fff8ef; color: var(--text-dark); border: 1px solid #f3d9a8;
+}
+.status--reminder .btn-primary { padding: 8px 16px; white-space: nowrap; }
 .role-select { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 26px; }
 .role-card {
   display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
@@ -181,6 +207,7 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 .role-card--active { border-color: var(--mango-primary); background: #fff8ef; }
 
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; margin-bottom: 26px; }
+.field-grid--single { grid-template-columns: 1fr; }
 .field { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600; color: var(--text-dark); }
 .field input, .field select {
   padding: 11px 14px; border-radius: 10px; border: 1.5px solid var(--border);
@@ -193,6 +220,48 @@ body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 
 .auth-card__footer { text-align: center; margin-top: 20px; color: var(--text-muted); font-size: 0.9rem; }
 .auth-card__footer a { color: var(--mango-primary-dark); font-weight: 600; text-decoration: none; }
+
+/* ---------- Page banner (dashboard headers) ---------- */
+.page-banner {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  padding: 40px 36px;
+  margin: 24px 0 32px;
+  color: #fff;
+  background-size: cover;
+  background-position: center;
+  box-shadow: var(--shadow-md);
+}
+.page-banner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, rgba(30,74,39,0.88) 0%, rgba(42,31,20,0.45) 100%);
+}
+.page-banner--farmer { background-image: url('/images/farmer-banner.jpg'); }
+.page-banner--trader { background-image: url('/images/trader-banner.jpg'); }
+.page-banner--admin  { background-image: url('/images/admin-banner.jpg'); }
+
+.page-banner__content { position: relative; z-index: 1; }
+.page-banner__eyebrow {
+  display: inline-block; margin-bottom: 12px; padding: 5px 14px; border-radius: 999px;
+  background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35);
+  font-weight: 600; font-size: 0.82rem;
+}
+.page-banner h1 {
+  color: #fff; margin: 0 0 8px; font-size: clamp(1.5rem, 3vw, 2rem);
+}
+.page-banner h1::after { background: rgba(255,255,255,0.6); }
+.page-banner__subtitle { margin: 0; color: rgba(255,255,255,0.9); font-size: 0.98rem; max-width: 560px; }
+.page-banner__actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.page-banner__actions .btn-primary {
+  background: var(--color-gold); color: #2a1f14;
+}
+.page-banner__actions .btn-primary:hover { background: var(--color-gold-dark); color: #fff; }
+
+@media (max-width: 640px) {
+  .page-banner { padding: 30px 22px; }
+}
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
