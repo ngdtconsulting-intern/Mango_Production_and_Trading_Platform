@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getCurrentUser } from './store/authSlice';
 import Navbar from './components/Navbar';
@@ -26,9 +26,8 @@ import AdminDashboard from './pages/admin/Dashboard';
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
   const dispatch = useDispatch();
-  const location = useLocation();
   const { user } = useSelector((state) => state.auth);
-  const { hasSurvey, checking } = useSelector((state) => state.survey);
+  const { hasSurvey } = useSelector((state) => state.survey);
 
   useEffect(() => {
     if (user?.role === 'farmer' && hasSurvey === null) {
@@ -44,16 +43,9 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/" replace />;
   }
 
-  const isSurveyPage = location.pathname === '/farmer/survey';
-
-  if (user.role === 'farmer' && !isSurveyPage) {
-    if (checking || hasSurvey === null) {
-      return <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>;
-    }
-    if (hasSurvey === false) {
-      return <Navigate to="/farmer/survey" replace />;
-    }
-  }
+  // Farmers can navigate freely everywhere now — we only use hasSurvey to
+  // show a reminder banner on the dashboard (see FarmerDashboard.jsx),
+  // instead of blocking every other page until the survey is submitted.
 
   return (
     <>
@@ -79,8 +71,8 @@ function App() {
   }, [dispatch]);
 
   return (
-  <BrowserRouter>
-        <Routes>
+    <BrowserRouter>
+      <Routes>
         {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -103,13 +95,13 @@ function App() {
           }
         />
         <Route
-  path="/farmer/farms/new"
-  element={
-    <ProtectedRoute requiredRole={['farmer']}>
-      <AddFarm />
-    </ProtectedRoute>
-  }
-/>
+          path="/farmer/farms/new"
+          element={
+            <ProtectedRoute requiredRole={['farmer']}>
+              <AddFarm />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/farmer/market"
           element={
@@ -137,6 +129,31 @@ function App() {
           }
         />
         <Route
+<<<<<<< HEAD
+          path="/trader/requirements/create"
+          element={
+            <ProtectedRoute requiredRole={['trader']}>
+              <CreateRequirement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/trader/requirements/:id"
+          element={
+            <ProtectedRoute requiredRole={['trader']}>
+              <RequirementDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/trader/directory"
+          element={
+            <ProtectedRoute requiredRole={['trader']}>
+              <FarmerDirectory />
+            </ProtectedRoute>
+          }
+        />
+=======
   path="/trader/requirements/create"
   element={
     <ProtectedRoute requiredRole={['trader']}>
@@ -152,6 +169,7 @@ function App() {
     </ProtectedRoute>
   }
 />
+>>>>>>> 1e66783aa8b4297465d09896ff65d6de06c22d50
 
         {/* Admin Routes */}
         <Route

@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import PageBanner from '../../components/PageBanner';
+import { checkSurveyStatus } from '../../store/surveySlice';
 import '../../styles/dashboard.css';
 
 export default function FarmerDashboard() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const { hasSurvey } = useSelector((state) => state.survey);
   const [farms, setFarms] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchFarms();
+    if (hasSurvey === null) dispatch(checkSurveyStatus());
   }, []);
 
   const fetchFarms = async () => {
@@ -29,7 +34,21 @@ export default function FarmerDashboard() {
 
   return (
     <div className="dashboard-container">
-      <h1>Welcome, {user?.name}</h1>
+      <PageBanner
+        variant="farmer"
+        eyebrow="🌳 Farmer dashboard"
+        title={`Welcome back, ${user?.name}`}
+        subtitle="Manage your orchards, submit production surveys, and respond to trader requirements."
+      />
+
+      {hasSurvey === false && (
+        <div className="status status--reminder">
+          <span>📋 You haven't submitted a production survey yet — it helps traders find you.</span>
+          <button className="btn-primary" onClick={() => navigate('/farmer/survey')}>
+            Complete survey
+          </button>
+        </div>
+      )}
 
       <div className="dashboard-actions">
         <button onClick={() => navigate('/farmer/farms/new')}>+ Add Farm</button>

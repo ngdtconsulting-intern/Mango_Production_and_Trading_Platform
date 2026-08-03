@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
+import PageBanner from '../../components/PageBanner';
 import '../../styles/trader-dashboard.css';
 
 export default function TraderDashboard() {
@@ -42,12 +43,16 @@ export default function TraderDashboard() {
 
   return (
     <div className="trader-dashboard">
-      <div className="dashboard-header">
-        <h1>🏪 Trader Dashboard</h1>
+      <PageBanner
+        variant="trader"
+        eyebrow="📦 Trader dashboard"
+        title="Trader Dashboard"
+        subtitle="Post buying requirements and connect directly with farmers — no middleman."
+      >
         <button className="btn-primary" onClick={() => navigate('/trader/requirements/create')}>
           + New Buying Requirement
         </button>
-      </div>
+      </PageBanner>
 
       <div className="stats-grid">
         <StatCard label="Total Requirements" value={stats.totalRequirements} />

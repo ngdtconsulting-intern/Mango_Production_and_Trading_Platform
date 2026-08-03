@@ -38,9 +38,6 @@
 
 body {
   background-color: var(--color-bg);
-  background-image:
-    repeating-linear-gradient(45deg, rgba(42, 31, 20, 0.035) 0 1px, transparent 1px 22px),
-    repeating-linear-gradient(-45deg, rgba(42, 31, 20, 0.035) 0 1px, transparent 1px 22px);
   color: var(--color-ink);
   font-family: var(--font-body);
 }

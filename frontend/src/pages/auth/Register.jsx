@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { register } from '../../store/authSlice';
-
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 const initialForm = {
   name: '',
   email: '',
@@ -139,7 +139,7 @@ export default function Register() {
                     onClick={() => setShowPassword((s) => !s)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? '🙈' : '👁️'}
+                    {showPassword ? <FiEyeOff /> : <FiEye />}
                   </button>
                 </div>
               </label>
