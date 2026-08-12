@@ -41,8 +41,10 @@ export default function TraderDashboard() {
     }
   };
 
+  if (loading) return <div className="dashboard-container">Loading...</div>;
+
   return (
-    <div className="trader-dashboard">
+    <div className="dashboard-container">
       <PageBanner
         variant="trader"
         eyebrow="📦 Trader dashboard"
@@ -55,25 +57,24 @@ export default function TraderDashboard() {
       </PageBanner>
 
       <div className="stats-grid">
-        <StatCard label="Total Requirements" value={stats.totalRequirements} />
-        <StatCard label="Open" value={stats.openRequirements} color="green" />
-        <StatCard label="In Progress" value={stats.inProgressRequirements} color="blue" />
-        <StatCard label="Completed" value={stats.completedRequirements} color="purple" />
+        <StatCard label="Total Requirements" value={stats.totalRequirements} icon="📦" />
+        <StatCard label="Open" value={stats.openRequirements} color="green" icon="🟢" />
+        <StatCard label="In Progress" value={stats.inProgressRequirements} color="blue" icon="⏳" />
+        <StatCard label="Completed" value={stats.completedRequirements} color="purple" icon="✅" />
       </div>
 
-      <div className="recent-section" style={{ marginBottom: 40 }}>
-        <h2>Your Requirements</h2>
-        {loading ? (
-          <p>Loading...</p>
-        ) : myRequirements.length === 0 ? (
-          <p>You haven't posted any buying requirements yet.</p>
+      <div className="dashboard-section">
+        <div className="dashboard-section-head">
+          <h2>Your Requirements</h2>
+        </div>
+        {myRequirements.length === 0 ? (
+          <p className="empty-message-small">You haven't posted any buying requirements yet.</p>
         ) : (
           <div className="requirements-list">
             {myRequirements.map((req) => (
               <div
                 key={req._id}
                 className="requirement-item"
-                style={{ cursor: 'pointer' }}
                 onClick={() => navigate(`/trader/requirements/${req._id}`)}
               >
                 <h4>{req.variety} — {req.status === 'in-progress' ? 'Accepted' : req.status.charAt(0).toUpperCase() + req.status.slice(1)}</h4>
@@ -84,29 +85,28 @@ export default function TraderDashboard() {
         )}
       </div>
 
-      <div className="recent-section">
-        <h2>Recent Market Opportunities</h2>
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <div className="requirements-list">
-            {recentRequirements.map((req) => (
-              <div key={req._id} className="requirement-item">
-                <h4>{req.variety}</h4>
-                <p>{req.quantityMT} MT • Rs. {req.budget.minPricePerKg}-{req.budget.maxPricePerKg}/kg</p>
-                <small>{req.location.district}</small>
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="dashboard-section">
+        <div className="dashboard-section-head">
+          <h2>Recent Market Opportunities</h2>
+        </div>
+        <div className="requirements-list">
+          {recentRequirements.map((req) => (
+            <div key={req._id} className="requirement-item requirement-item--static">
+              <h4>{req.variety}</h4>
+              <p>{req.quantityMT} MT • Rs. {req.budget.minPricePerKg}-{req.budget.maxPricePerKg}/kg</p>
+              <small>{req.location.district}</small>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-function StatCard({ label, value, color = 'default' }) {
+function StatCard({ label, value, color = 'default', icon }) {
   return (
     <div className={`stat-card ${color}`}>
+      {icon && <div className="stat-card-icon">{icon}</div>}
       <p className="stat-label">{label}</p>
       <p className="stat-value">{value}</p>
     </div>

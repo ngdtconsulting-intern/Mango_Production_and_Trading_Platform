@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
+import PageBanner from '../../components/PageBanner';
 import '../../styles/trader.css';
 
 const STATUS_LABELS = {
@@ -52,12 +53,19 @@ export default function RequirementDetail() {
     }
   };
 
-  if (loading) return <div className="buying-requirements-container">Loading...</div>;
-  if (!requirement) return <div className="buying-requirements-container">Requirement not found.</div>;
+  if (loading) return <div className="dashboard-container">Loading...</div>;
+  if (!requirement) return <div className="dashboard-container">Requirement not found.</div>;
 
   return (
-    <div className="buying-requirements-container">
-      <button className="btn-cancel" style={{ marginBottom: 20 }} onClick={() => navigate('/trader/dashboard')}>
+    <div className="dashboard-container">
+      <PageBanner
+        variant="trader"
+        eyebrow="📦 Requirement details"
+        title={requirement.variety}
+        subtitle="Review the full requirement and manage farmer responses."
+      />
+
+      <button className="btn-cancel" style={{ marginBottom: 20, maxWidth: 200 }} onClick={() => navigate('/trader/dashboard')}>
         ← Back to Dashboard
       </button>
 
@@ -91,7 +99,7 @@ export default function RequirementDetail() {
       </div>
 
       {requirement.status === 'in-progress' && (
-        <button className="btn-submit" style={{ marginBottom: 28 }} onClick={handleMarkCompleted}>
+        <button className="btn-submit" style={{ marginBottom: 28, maxWidth: 260 }} onClick={handleMarkCompleted}>
           Mark Order Completed
         </button>
       )}

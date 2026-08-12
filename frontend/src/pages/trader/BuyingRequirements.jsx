@@ -1,249 +1,172 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import api from '../../services/api';
+import PageBanner from '../../components/PageBanner';
 import '../../styles/trader.css';
 
-export default function BuyingRequirements() {
-  const [requirements, setRequirements] = useState([]);
-  const [filteredRequirements, setFilteredRequirements] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    status: 'open',
-    variety: '',
-    district: '',
-  });
-  const [selectedReq, setSelectedReq] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-
-  const VARIETIES = ['Maldaha', 'Amrapali', 'Sindhure', 'Langra', 'Dusehri', 'Chaunsa'];
-  const DISTRICTS = ['Saptari', 'Siraha', 'Mahottari', 'Dhanusha', 'Janakpur'];
-
-  useEffect(() => {
-    fetchRequirements();
-  }, []);
-
-  useEffect(() => {
-    filterRequirements();
-  }, [requirements, filters]);
-
-  const fetchRequirements = async () => {
-  try {
-    const response = await api.get('/traders/requirements', {
-      params: { status: 'open', limit: 100 },
-    });
-    setRequirements(response.data.requirements);
-  } catch (error) {
-    console.error('Error fetching requirements:', error);
-  } finally {
-    setLoading(false);
-  }
+const VARIETIES = ['Maldaha', 'Amrapali', 'Sindhure', 'Langra', 'Dusehri', 'Chaunsa'];
+const PROVINCE_DISTRICTS = {
+  Koshi: ['Bhojpur', 'Dhankuta', 'Ilam', 'Jhapa', 'Khotang', 'Morang', 'Okhaldhunga', 'Panchthar', 'Sankhuwasabha', 'Solukhumbu', 'Sunsari', 'Taplejung', 'Tehrathum', 'Udayapur'],
+  Madhesh: ['Bara', 'Dhanusha', 'Mahottari', 'Parsa', 'Rautahat', 'Saptari', 'Sarlahi', 'Siraha'],
+  Bagmati: ['Bhaktapur', 'Chitwan', 'Dhading', 'Dolakha', 'Kathmandu', 'Kavrepalanchowk', 'Lalitpur', 'Makwanpur', 'Nuwakot', 'Ramechhap', 'Rasuwa', 'Sindhuli', 'Sindhupalchowk'],
+  Gandaki: ['Baglung', 'Gorkha', 'Kaski', 'Lamjung', 'Manang', 'Mustang', 'Myagdi', 'Nawalpur', 'Parbat', 'Syangja', 'Tanahun'],
+  Lumbini: ['Arghakhanchi', 'Banke', 'Bardiya', 'Dang', 'Gulmi', 'Kapilvastu', 'Parasi', 'Palpa', 'Pyuthan', 'Rolpa', 'Rukum East', 'Rupandehi'],
+  Karnali: ['Dailekh', 'Dolpa', 'Humla', 'Jajarkot', 'Jumla', 'Kalikot', 'Mugu', 'Rukum West', 'Salyan', 'Surkhet'],
+  Sudurpashchim: ['Achham', 'Baitadi', 'Bajhang', 'Bajura', 'Dadeldhura', 'Darchula', 'Doti', 'Kailali', 'Kanchanpur'],
 };
 
-  const filterRequirements = () => {
-    let filtered = requirements;
-
-    if (filters.variety) {
-      filtered = filtered.filter((r) => r.variety === filters.variety);
-    }
-
-    if (filters.district) {
-      filtered = filtered.filter((r) => r.location.district === filters.district);
-    }
-
-    if (filters.status) {
-      filtered = filtered.filter((r) => r.status === filters.status);
-    }
-
-    setFilteredRequirements(filtered);
-  };
-
-  const handleApply = (req) => {
-    setSelectedReq(req);
-    setShowForm(true);
-  };
-
-  return (
-    <div className="buying-requirements-container">
-      <div className="header">
-        <h1>🛒 Buying Requirements</h1>
-        <p>Available mango buying opportunities from traders</p>
-      </div>
-
-      {/* Filters */}
-      <div className="filters-section">
-        <div className="filter-group">
-          <label>Variety:</label>
-          <select
-            value={filters.variety}
-            onChange={(e) => setFilters({ ...filters, variety: e.target.value })}
-          >
-            <option value="">All Varieties</option>
-            {VARIETIES.map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label>District:</label>
-          <select
-            value={filters.district}
-            onChange={(e) => setFilters({ ...filters, district: e.target.value })}
-          >
-            <option value="">All Districts</option>
-            {DISTRICTS.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Requirements List */}
-      {loading ? (
-        <p className="loading">Loading requirements...</p>
-      ) : filteredRequirements.length === 0 ? (
-        <p className="empty-message">No buying requirements found matching your filters</p>
-      ) : (
-        <div className="requirements-list">
-          {filteredRequirements.map((req) => (
-            <div key={req._id} className="requirement-card">
-              <div className="requirement-header">
-                <h3>{req.variety}</h3>
-                <span className={`status-badge ${req.status}`}>{req.status}</span>
-              </div>
-
-              <div className="requirement-details">
-                <div className="detail-row">
-                  <span className="label">Quantity:</span>
-                  <span className="value">{req.quantityMT} MT ({req.quantityKg} kg)</span>
-                </div>
-
-                <div className="detail-row">
-                  <span className="label">Quality:</span>
-                  <span className="value">{req.quality}</span>
-                </div>
-
-                <div className="detail-row">
-                  <span className="label">Location:</span>
-                  <span className="value">{req.location.district}, {req.location.municipality}</span>
-                </div>
-
-                <div className="detail-row">
-                  <span className="label">Price Range:</span>
-                  <span className="value">
-                    Rs. {req.budget.minPricePerKg} - Rs. {req.budget.maxPricePerKg}/kg
-                  </span>
-                </div>
-
-                <div className="detail-row">
-                  <span className="label">Required By:</span>
-                  <span className="value">{new Date(req.requiredByDate).toLocaleDateString()}</span>
-                </div>
-
-                <div className="detail-row">
-                  <span className="label">Trader:</span>
-                  <span className="value">{req.businessName}</span>
-                </div>
-              </div>
-
-              <div className="requirement-footer">
-                <span className="responses">{req.responseCount} responses</span>
-                <button className="btn-apply" onClick={() => handleApply(req)}>
-                  Apply Now
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Application Form Modal */}
-      {showForm && selectedReq && (
-        <ApplicationForm requirement={selectedReq} onClose={() => setShowForm(false)} />
-      )}
-    </div>
-  );
-}
-
-function ApplicationForm({ requirement, onClose }) {
+export default function CreateRequirement() {
+  const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    availableQuantityKg: requirement.quantityKg,
-    proposedPricePerKg: (requirement.budget.minPricePerKg + requirement.budget.maxPricePerKg) / 2,
-    message: '',
+    variety: VARIETIES[0],
+    quantityMT: '',
+    quality: 'good',
+    province: '',
+    district: '',
+    municipality: '',
+    minPricePerKg: '',
+    maxPricePerKg: '',
+    requiredByDate: '',
+    phone: '',
+    email: '',
   });
-  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
+    setSubmitting(true);
     try {
-      await api.post(`/traders/requirements/${requirement._id}/respond`, formData);
-      alert('Application submitted successfully!');
-      onClose();
+      await api.post('/traders/requirements', {
+        variety: formData.variety,
+        quantityMT: Number(formData.quantityMT),
+        quality: formData.quality,
+        location: {
+          province: formData.province,
+          district: formData.district,
+          municipality: formData.municipality,
+        },
+        budget: {
+          minPricePerKg: Number(formData.minPricePerKg),
+          maxPricePerKg: Number(formData.maxPricePerKg),
+        },
+        requiredByDate: formData.requiredByDate,
+        contact: {
+          phone: formData.phone,
+          email: formData.email,
+        },
+      });
+      toast.success('Buying requirement posted');
+      navigate('/trader/dashboard');
     } catch (error) {
-      alert(`Error: ${error.response?.data?.message || 'Failed to submit application'}`);
+      toast.error(error.response?.data?.message || 'Failed to post requirement');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Apply for {requirement.variety}</h2>
-          <button className="close-btn" onClick={onClose}>
-            ✕
-          </button>
+    <div className="dashboard-container">
+      <PageBanner
+        variant="trader"
+        eyebrow="📝 New requirement"
+        title="Post a Buying Requirement"
+        subtitle="Tell farmers what you're looking to buy."
+      />
+
+      <form onSubmit={handleSubmit} className="application-form" style={{ maxWidth: 480 }}>
+        <div className="form-group">
+          <label>Variety</label>
+          <select name="variety" value={formData.variety} onChange={handleChange}>
+            {VARIETIES.map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
         </div>
 
-        <form onSubmit={handleSubmit} className="application-form">
-          <div className="form-group">
-            <label>Available Quantity (kg)</label>
-            <input
-              type="number"
-              min="0"
-              value={formData.availableQuantityKg}
-              onChange={(e) => setFormData({ ...formData, availableQuantityKg: e.target.value })}
-              required
-            />
-          </div>
+        <div className="form-group">
+          <label>Quantity (MT)</label>
+          <input type="number" step="0.1" min="0.1" name="quantityMT" value={formData.quantityMT} onChange={handleChange} required />
+        </div>
 
-          <div className="form-group">
-            <label>Proposed Price (Rs/kg)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.proposedPricePerKg}
-              onChange={(e) => setFormData({ ...formData, proposedPricePerKg: e.target.value })}
-              required
-            />
-          </div>
+        <div className="form-group">
+          <label>Quality</label>
+          <select name="quality" value={formData.quality} onChange={handleChange}>
+            <option value="premium">Premium</option>
+            <option value="good">Good</option>
+            <option value="fair">Fair</option>
+          </select>
+        </div>
 
-          <div className="form-group">
-            <label>Message</label>
-            <textarea
-              rows="4"
-              placeholder="Tell the trader about your farm and product quality..."
-              value={formData.message}
-              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-            />
-          </div>
+        <div className="form-group">
+          <label>Province</label>
+          <select
+            name="province"
+            value={formData.province}
+            onChange={(e) => setFormData({ ...formData, province: e.target.value, district: '' })}
+            required
+          >
+            <option value="">Select Province</option>
+            {Object.keys(PROVINCE_DISTRICTS).map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </div>
 
-          <div className="modal-actions">
-            <button type="submit" className="btn-submit" disabled={loading}>
-              {loading ? 'Submitting...' : 'Submit Application'}
-            </button>
-            <button type="button" className="btn-cancel" onClick={onClose}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
+        <div className="form-group">
+          <label>District</label>
+          <select
+            name="district"
+            value={formData.district}
+            onChange={handleChange}
+            required
+            disabled={!formData.province}
+          >
+            <option value="">{formData.province ? 'Select District' : 'Select province first'}</option>
+            {(PROVINCE_DISTRICTS[formData.province] || []).map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Municipality</label>
+          <input type="text" name="municipality" value={formData.municipality} onChange={handleChange} required />
+        </div>
+
+        <div className="form-group">
+          <label>Min Price (Rs/kg)</label>
+          <input type="number" step="0.01" name="minPricePerKg" value={formData.minPricePerKg} onChange={handleChange} required />
+        </div>
+
+        <div className="form-group">
+          <label>Max Price (Rs/kg)</label>
+          <input type="number" step="0.01" name="maxPricePerKg" value={formData.maxPricePerKg} onChange={handleChange} required />
+        </div>
+
+        <div className="form-group">
+          <label>Required By</label>
+          <input type="date" name="requiredByDate" value={formData.requiredByDate} onChange={handleChange} required />
+        </div>
+
+        <div className="form-group">
+          <label>Contact Phone</label>
+          <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required />
+        </div>
+
+        <div className="form-group">
+          <label>Contact Email</label>
+          <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+        </div>
+
+        <div className="modal-actions">
+          <button type="submit" className="btn-submit" disabled={submitting}>
+            {submitting ? 'Posting...' : 'Post Requirement'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

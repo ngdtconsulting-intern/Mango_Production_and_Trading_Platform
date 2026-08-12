@@ -1,13 +1,15 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getCurrentUser } from './store/authSlice';
-import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import { checkSurveyStatus } from './store/surveySlice';
+
 // Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Home from './pages/Home';
+
 // Farmer Pages
 import FarmerDashboard from './pages/farmer/Dashboard';
 import SurveyForm from './pages/farmer/SurveyForm';
@@ -15,12 +17,12 @@ import MarketPrices from './pages/farmer/MarketPrices';
 import AddFarm from './pages/farmer/AddFarm';
 import ChatBox from './pages/community/ChatBox';
 
-
 // Trader Pages
 import TraderDashboard from './pages/trader/Dashboard';
 import BuyingRequirements from './pages/trader/BuyingRequirements';
 import CreateRequirement from './pages/trader/CreateRequirement';
 import RequirementDetail from './pages/trader/RequirementDetail';
+import FarmerDirectory from './pages/trader/FarmerDirectory';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -45,21 +47,17 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/" replace />;
   }
 
-  // Farmers can navigate freely everywhere now — we only use hasSurvey to
-  // show a reminder banner on the dashboard (see FarmerDashboard.jsx),
-  // instead of blocking every other page until the survey is submitted.
-
   return (
-    <>
-      <Navbar />
-      {children}
-    </>
+    <div className="app-shell">
+      <Sidebar />
+      <main className="app-main">{children}</main>
+    </div>
   );
 };
+
+// Root route modified to ALWAYS return <Home />
 const RootRoute = () => {
-  const { user } = useSelector((state) => state.auth);
-  if (!user) return <Home />;
-  return <Navigate to={`/${user.role}/dashboard`} replace />;
+  return <Home />;
 };
 
 function App() {
@@ -113,13 +111,13 @@ function App() {
           }
         />
         <Route
-  path="/farmer/community"
-  element={
-    <ProtectedRoute requiredRole={['farmer']}>
-      <ChatBox />
-    </ProtectedRoute>
-  }
-/>
+          path="/farmer/community"
+          element={
+            <ProtectedRoute requiredRole={['farmer']}>
+              <ChatBox />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Trader Routes */}
         <Route
@@ -138,7 +136,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-<Route
+        <Route
           path="/trader/requirements/create"
           element={
             <ProtectedRoute requiredRole={['trader']}>
@@ -151,6 +149,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole={['trader']}>
               <RequirementDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/trader/directory"
+          element={
+            <ProtectedRoute requiredRole={['trader']}>
+              <FarmerDirectory />
             </ProtectedRoute>
           }
         />

@@ -1,14 +1,173 @@
 @import './dashboard.css';
 
-.requirements-list { display: flex; flex-direction: column; gap: 10px; }
-.requirement-item {
-  padding: 16px 18px; border: 1px solid var(--border); border-radius: 14px; background: #fff;
-  cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+/* Container width/padding now comes from .dashboard-container in dashboard.css —
+   every trader page uses that same class, so there's only one place that
+   defines width across the whole app. This file only adds trader-specific
+   pieces: requirement cards, status badges, apply/action buttons. */
+
+.dashboard-container h1 { color: var(--color-ink); }
+
+/* ---------- Requirements & Item Lists ---------- */
+.requirements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
 }
-.requirement-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-sm); border-color: var(--mango-primary); }
+
+.requirement-item,
+.requirement-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 18px 22px;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.requirement-item:hover,
+.requirement-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-orchard);
+}
+
 .requirement-item--static { cursor: default; }
-.requirement-item--static:hover { transform: none; box-shadow: none; border-color: var(--border); }
-.requirement-item__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.requirement-item h4 { margin: 0 0 4px; font-size: 1rem; }
-.requirement-item p { margin: 0; color: var(--text-muted); font-size: 0.88rem; }
-.requirement-item small { display: flex; align-items: center; gap: 4px; margin-top: 6px; color: var(--text-muted); }
+.requirement-item--static:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+  border-color: var(--color-border);
+}
+
+.requirement-item__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.requirement-item h4,
+.requirement-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--color-ink);
+}
+
+.requirement-item p {
+  margin: 0;
+  color: var(--color-bark);
+  font-size: 14px;
+}
+
+.requirement-item small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--color-bark);
+  font-size: 13px;
+}
+
+/* ---------- Badges & Buttons ---------- */
+.status-badge {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-badge.open      { background: #fdf1de; color: var(--color-gold-dark); }
+.status-badge.pending   { background: #e8eef5; color: var(--color-info); }
+.status-badge.accepted,
+.status-badge.closed    { background: #e4f2e9; color: var(--color-orchard-dark); }
+.status-badge.rejected  { background: #fbeaea; color: var(--color-vermillion-dark); }
+
+.btn-apply,
+.btn-action {
+  font-family: var(--font-body);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(90deg, var(--color-orchard), var(--color-orchard-dark));
+  color: #fff;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn-apply:hover,
+.btn-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(47, 107, 60, 0.25);
+}
+
+/* ---------- Contact info (used on Requirement Detail + Farmer Directory) ---------- */
+.farmer-contacts {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.contact-btn {
+  flex: 1;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  min-width: 100px;
+  transition: all 0.15s ease;
+}
+
+.contact-btn.phone {
+  border: 1px solid var(--color-orchard);
+  color: var(--color-orchard-dark);
+  background: rgba(47, 107, 60, 0.08);
+}
+.contact-btn.phone:hover { background: var(--color-orchard); color: #fff; }
+
+.contact-btn.email {
+  border: 1px solid var(--color-gold);
+  color: var(--color-gold-dark);
+  background: rgba(232, 163, 23, 0.1);
+}
+.contact-btn.email:hover { background: var(--color-gold); color: #2a1f14; }
+
+.contact-panel {
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-top: 12px;
+}
+.contact-panel-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-bark);
+  margin: 0 0 8px;
+}
+
+/* ---------- Dashboard section blocks (Your Requirements / Recent Opportunities) ---------- */
+.dashboard-section { margin-top: 36px; }
+.dashboard-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.dashboard-section-head h2 { margin: 0; }
+
+@media (max-width: 768px) {
+  .dashboard-container { padding: 24px 16px 50px; }
+}

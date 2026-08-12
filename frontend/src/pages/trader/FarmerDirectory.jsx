@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import PageBanner from '../../components/PageBanner';
 import '../../styles/directory.css';
 
 export default function FarmerDirectory() {
@@ -45,11 +46,13 @@ export default function FarmerDirectory() {
   };
 
   return (
-    <div className="farmer-directory-container">
-      <div className="header">
-        <h1>👨‍🌾 Farmer Directory</h1>
-        <p>Find and connect with mango farmers</p>
-      </div>
+    <div className="dashboard-container">
+      <PageBanner
+        variant="trader"
+        eyebrow="👨‍🌾 Directory"
+        title="Farmer Directory"
+        subtitle="Find and connect with mango farmers across Nepal."
+      />
 
       {/* Filters */}
       <div className="filters-section">

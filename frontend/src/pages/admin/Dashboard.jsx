@@ -88,26 +88,32 @@ export default function AdminDashboard() {
 
       <div className="stats-grid">
         <div className="stat-card green">
+          <div className="stat-card-icon">👥</div>
           <p className="stat-label">Total Users</p>
           <p className="stat-value">{stats?.totalUsers ?? 0}</p>
         </div>
-        <div className="stat-card">
+        <div className="stat-card gold">
+          <div className="stat-card-icon">🌳</div>
           <p className="stat-label">Farmers</p>
           <p className="stat-value">{stats?.totalFarmers ?? 0}</p>
         </div>
         <div className="stat-card blue">
+          <div className="stat-card-icon">📦</div>
           <p className="stat-label">Traders</p>
           <p className="stat-value">{stats?.totalTraders ?? 0}</p>
         </div>
         <div className="stat-card">
+          <div className="stat-card-icon">📋</div>
           <p className="stat-label">Total Surveys</p>
           <p className="stat-value">{stats?.totalSurveys ?? 0}</p>
         </div>
         <div className="stat-card green">
+          <div className="stat-card-icon">✅</div>
           <p className="stat-label">Verified Surveys</p>
           <p className="stat-value">{stats?.completedSurveys ?? 0}</p>
         </div>
         <div className="stat-card purple">
+          <div className="stat-card-icon">🛒</div>
           <p className="stat-label">Open Buying Requirements</p>
           <p className="stat-value">{stats?.totalBuyingRequirements ?? 0}</p>
         </div>

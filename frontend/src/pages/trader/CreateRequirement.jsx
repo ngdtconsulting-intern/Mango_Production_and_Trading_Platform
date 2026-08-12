@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
+import PageBanner from '../../components/PageBanner';
 import '../../styles/trader.css';
 
 const VARIETIES = ['Maldaha', 'Amrapali', 'Sindhure', 'Langra', 'Dusehri', 'Chaunsa'];
-const DISTRICTS = ['Saptari', 'Siraha', 'Mahottari', 'Dhanusha', 'Janakpur'];
 const PROVINCE_DISTRICTS = {
   Koshi: ['Bhojpur', 'Dhankuta', 'Ilam', 'Jhapa', 'Khotang', 'Morang', 'Okhaldhunga', 'Panchthar', 'Sankhuwasabha', 'Solukhumbu', 'Sunsari', 'Taplejung', 'Tehrathum', 'Udayapur'],
   Madhesh: ['Bara', 'Dhanusha', 'Mahottari', 'Parsa', 'Rautahat', 'Saptari', 'Sarlahi', 'Siraha'],
@@ -23,7 +23,8 @@ export default function CreateRequirement() {
     variety: VARIETIES[0],
     quantityMT: '',
     quality: 'good',
-    district: DISTRICTS[0],
+    province: '',
+    district: '',
     municipality: '',
     minPricePerKg: '',
     maxPricePerKg: '',
@@ -45,10 +46,10 @@ export default function CreateRequirement() {
         quantityMT: Number(formData.quantityMT),
         quality: formData.quality,
         location: {
-  province: formData.province,
-  district: formData.district,
-  municipality: formData.municipality,
-},
+          province: formData.province,
+          district: formData.district,
+          municipality: formData.municipality,
+        },
         budget: {
           minPricePerKg: Number(formData.minPricePerKg),
           maxPricePerKg: Number(formData.maxPricePerKg),
@@ -69,11 +70,13 @@ export default function CreateRequirement() {
   };
 
   return (
-    <div className="buying-requirements-container">
-      <div className="header">
-        <h1>Post a Buying Requirement</h1>
-        <p>Tell farmers what you're looking to buy</p>
-      </div>
+    <div className="dashboard-container">
+      <PageBanner
+        variant="trader"
+        eyebrow="📝 New requirement"
+        title="Post a Buying Requirement"
+        subtitle="Tell farmers what you're looking to buy."
+      />
 
       <form onSubmit={handleSubmit} className="application-form" style={{ maxWidth: 480 }}>
         <div className="form-group">
@@ -98,35 +101,35 @@ export default function CreateRequirement() {
         </div>
 
         <div className="form-group">
-  <label>Province</label>
-  <select
-    name="province"
-    value={formData.province}
-    onChange={(e) => setFormData({ ...formData, province: e.target.value, district: '' })}
-    required
-  >
-    <option value="">Select Province</option>
-    {Object.keys(PROVINCE_DISTRICTS).map((p) => (
-      <option key={p} value={p}>{p}</option>
-    ))}
-  </select>
-</div>
+          <label>Province</label>
+          <select
+            name="province"
+            value={formData.province}
+            onChange={(e) => setFormData({ ...formData, province: e.target.value, district: '' })}
+            required
+          >
+            <option value="">Select Province</option>
+            {Object.keys(PROVINCE_DISTRICTS).map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </div>
 
-<div className="form-group">
-  <label>District</label>
-  <select
-    name="district"
-    value={formData.district}
-    onChange={handleChange}
-    required
-    disabled={!formData.province}
-  >
-    <option value="">{formData.province ? 'Select District' : 'Select province first'}</option>
-    {(PROVINCE_DISTRICTS[formData.province] || []).map((d) => (
-      <option key={d} value={d}>{d}</option>
-    ))}
-  </select>
-</div>
+        <div className="form-group">
+          <label>District</label>
+          <select
+            name="district"
+            value={formData.district}
+            onChange={handleChange}
+            required
+            disabled={!formData.province}
+          >
+            <option value="">{formData.province ? 'Select District' : 'Select province first'}</option>
+            {(PROVINCE_DISTRICTS[formData.province] || []).map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+        </div>
 
         <div className="form-group">
           <label>Municipality</label>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function Home() {
   const { user } = useSelector((state) => state.auth);
@@ -13,6 +14,7 @@ export default function Home() {
           <span>Aam Bazaar</span>
         </div>
         <div className="home__nav-actions">
+          <ThemeToggle />
           {user ? (
             <Link to={`/${user.role}/dashboard`} className="btn btn--primary">Go to dashboard</Link>
           ) : (
@@ -122,7 +124,7 @@ export default function Home() {
       {!user && (
         <section className="home__cta">
           <h2>Ready to get started?</h2>
-          <p>Join as a farmer, trader, or admin — it only takes a minute.</p>
+          <p>Join as a farmer and trader — it only takes a minute.</p>
           <Link to="/register" className="btn btn--white btn--lg">Create your account</Link>
         </section>
       )}

@@ -24,6 +24,17 @@ export const register = async (req, res) => {
       });
     }
 
+    // Only one admin account is allowed on the platform
+    if (role === 'admin') {
+      const existingAdmin = await User.findOne({ role: 'admin' });
+      if (existingAdmin) {
+        return res.status(403).json({
+          success: false,
+          message: 'An admin account already exists. Only one admin is allowed.',
+        });
+      }
+    }
+
     // Create user
     user = await User.create({
       name,
@@ -155,10 +166,26 @@ export const logout = async (req, res) => {
   });
 };
 
+export const adminExists = async (req, res) => {
+  try {
+    const existingAdmin = await User.findOne({ role: 'admin' });
+    res.json({
+      success: true,
+      exists: !!existingAdmin,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export default {
   register,
   login,
   getCurrentUser,
   updateProfile,
   logout,
+  adminExists,
 };

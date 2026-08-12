@@ -12,10 +12,12 @@ const initialForm = {
   address: { ward: '', tole: '', district: '', municipality: '' },
 };
 
+// Admin is not selectable here — the platform owner's admin account is
+// created directly (e.g. via the backend seed script / database), never
+// through public self-registration.
 const ROLES = [
   { value: 'farmer', label: 'Farmer', icon: '🌳', desc: 'Register orchards & surveys' },
   { value: 'trader', label: 'Trader', icon: '📦', desc: 'Post requirements & buy' },
-  { value: 'admin', label: 'Admin', icon: '⚙️', desc: 'Manage the platform' },
 ];
 
 export default function Register() {
@@ -63,7 +65,7 @@ export default function Register() {
           </Link>
           <h2 className="auth-side__title">Join Nepal's mango supply chain, digitally.</h2>
           <p className="auth-side__text">
-            One account. Farmers, traders, and admins all work from the same
+            One account. Farmers and traders work from the same
             platform — no spreadsheets, no middlemen.
           </p>
           <ul className="auth-side__list">
@@ -78,11 +80,11 @@ export default function Register() {
           <form className="auth-card auth-card--wide" onSubmit={handleSubmit}>
             <div className="auth-card__brand auth-card__brand--mobile">🥭 Aam Bazaar</div>
             <h1>Create an account</h1>
-            <p className="auth-card__subtitle">Join as a farmer, trader, or admin.</p>
+            <p className="auth-card__subtitle">Join as a farmer or a trader.</p>
 
             {error && <div className="status status--error">{error}</div>}
 
-            <div className="role-select">
+            <div className="role-select role-select--2">
               {ROLES.map((r) => (
                 <button
                   type="button"

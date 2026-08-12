@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { login } from '../../store/authSlice';
+import ThemeToggle from '../../components/ThemeToggle';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 export default function Login() {
@@ -33,6 +34,7 @@ export default function Login() {
 
   return (
     <div className="auth-page">
+      <ThemeToggle className="auth-page__theme-toggle" />
       <div className="auth-shell">
         <aside className="auth-side">
           <Link to="/" className="auth-side__brand">
