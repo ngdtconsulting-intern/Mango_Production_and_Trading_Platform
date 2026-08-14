@@ -42,6 +42,7 @@ const userSchema = new mongoose.Schema(
 
     // Address
     address: {
+      province: String,
       ward: Number,
       tole: String,
       district: String,

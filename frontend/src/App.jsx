@@ -24,6 +24,8 @@ import RequirementDetail from './pages/trader/RequirementDetail';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
+// Officer Pages
+import OfficerDashboard from './pages/officer/Dashboard';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -151,6 +153,16 @@ function App() {
           element={
             <ProtectedRoute requiredRole={['trader']}>
               <RequirementDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Officer Routes */}
+        <Route
+          path="/officer/dashboard"
+          element={
+            <ProtectedRoute requiredRole={['surveyor']}>
+              <OfficerDashboard />
             </ProtectedRoute>
           }
         />

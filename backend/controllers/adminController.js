@@ -135,6 +135,50 @@ export const toggleUserStatus = async (req, res) => {
     });
   }
 };
+export const createStaffAccount = async (req, res) => {
+  try {
+    const { name, email, phone, password, role, address } = req.body;
+
+    // role is already restricted to ['admin', 'surveyor'] by validateStaffCreation
+    let user = await User.findOne({ $or: [{ email }, { phone }] });
+
+    if (user) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this email or phone already exists',
+      });
+    }
+
+    user = await User.create({
+      name,
+      email,
+      phone,
+      password,
+      role,
+      address,
+      verified: true,
+    });
+
+    logger.info(`Staff account created: ${user.email} (${user.role}) by ${req.user.email}`);
+
+    res.status(201).json({
+      success: true,
+      message: `${role === 'surveyor' ? 'Officer' : 'Admin'} account created successfully`,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    logger.error(`Staff account creation error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 export const getAnalyticsReport = async (req, res) => {
   try {
@@ -179,4 +223,5 @@ export default {
   toggleUserStatus,
   getAnalyticsReport,
   getUserDetails,
+  createStaffAccount,
 };

@@ -5,18 +5,10 @@ import api from '../../services/api';
 import '../../styles/forms.css';
 import { useDispatch } from 'react-redux';
 import { checkSurveyStatus } from '../../store/surveySlice';
+import { getProvinces, getDistricts, getMunicipalities } from '../../utils/nepalLocations';
 
 const EDUCATION_LEVELS = ['None', 'Primary', 'Secondary', 'Higher Secondary', 'Bachelor', 'Master or above'];
 const TREE_AGE_RANGES = ['1-3', '4-5', '6-10', '11-15', '16-25', '26-40', '40+'];
-const PROVINCE_DISTRICTS = {
-  Koshi: ['Bhojpur', 'Dhankuta', 'Ilam', 'Jhapa', 'Khotang', 'Morang', 'Okhaldhunga', 'Panchthar', 'Sankhuwasabha', 'Solukhumbu', 'Sunsari', 'Taplejung', 'Tehrathum', 'Udayapur'],
-  Madhesh: ['Bara', 'Dhanusha', 'Mahottari', 'Parsa', 'Rautahat', 'Saptari', 'Sarlahi', 'Siraha'],
-  Bagmati: ['Bhaktapur', 'Chitwan', 'Dhading', 'Dolakha', 'Kathmandu', 'Kavrepalanchowk', 'Lalitpur', 'Makwanpur', 'Nuwakot', 'Ramechhap', 'Rasuwa', 'Sindhuli', 'Sindhupalchowk'],
-  Gandaki: ['Baglung', 'Gorkha', 'Kaski', 'Lamjung', 'Manang', 'Mustang', 'Myagdi', 'Nawalpur', 'Parbat', 'Syangja', 'Tanahun'],
-  Lumbini: ['Arghakhanchi', 'Banke', 'Bardiya', 'Dang', 'Gulmi', 'Kapilvastu', 'Parasi', 'Palpa', 'Pyuthan', 'Rolpa', 'Rukum East', 'Rupandehi'],
-  Karnali: ['Dailekh', 'Dolpa', 'Humla', 'Jajarkot', 'Jumla', 'Kalikot', 'Mugu', 'Rukum West', 'Salyan', 'Surkhet'],
-  Sudurpashchim: ['Achham', 'Baitadi', 'Bajhang', 'Bajura', 'Dadeldhura', 'Darchula', 'Doti', 'Kailali', 'Kanchanpur'],
-};
 
 export default function SurveyForm() {
   const navigate = useNavigate();
@@ -25,17 +17,13 @@ export default function SurveyForm() {
 
   const [formData, setFormData] = useState({
     // Personal
-    farmerName: '',
-    phone: '',
     age: '',
     educationLevel: EDUCATION_LEVELS[0],
 
-    // Address
+    // Farm location
     province: '',
 district: '',
 municipality: '',
-    wardNumber: '',
-    tole: '',
 
     // Household
     householdMembers: '',
@@ -75,7 +63,15 @@ municipality: '',
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+    const updated = { ...formData, [name]: type === 'checkbox' ? checked : value };
+
+    // Cascading resets: changing province clears district+municipality,
+    // changing district clears municipality
+    if (name === 'district') {
+      updated.municipality = '';
+    }
+
+    setFormData(updated);
   };
 
   const handleTreeAgeChange = (range, value) => {
@@ -94,7 +90,6 @@ municipality: '',
       await api.post('/surveys', {
         ...formData,
         age: Number(formData.age),
-        wardNumber: Number(formData.wardNumber),
         householdMembers: Number(formData.householdMembers),
         orchardAreaKatha: Number(formData.orchardAreaKatha),
         totalMangoTrees: Number(formData.totalMangoTrees),
@@ -123,14 +118,6 @@ municipality: '',
         <h3 className="form-section">Your Details</h3>
         <div className="form-grid">
           <div>
-            <label>Full Name</label>
-            <input type="text" name="farmerName" value={formData.farmerName} onChange={handleChange} required />
-          </div>
-          <div>
-            <label>Phone</label>
-            <input type="tel" name="phone" value={formData.phone} onChange={handleChange} pattern="[0-9]{10}" required />
-          </div>
-          <div>
             <label>Age</label>
             <input type="number" name="age" min="18" max="100" value={formData.age} onChange={handleChange} required />
           </div>
@@ -142,18 +129,18 @@ municipality: '',
           </div>
         </div>
 
-        <h3 className="form-section">Address</h3>
+        <h3 className="form-section">Farm Location</h3>
 <div className="form-grid">
   <div>
     <label>Province</label>
     <select
       name="province"
       value={formData.province}
-      onChange={(e) => setFormData({ ...formData, province: e.target.value, district: '' })}
+      onChange={(e) => setFormData({ ...formData, province: e.target.value, district: '', municipality: '' })}
       required
     >
       <option value="">Select Province</option>
-      {Object.keys(PROVINCE_DISTRICTS).map((p) => (
+      {getProvinces().map((p) => (
         <option key={p} value={p}>{p}</option>
       ))}
     </select>
@@ -170,22 +157,27 @@ municipality: '',
       <option value="">
         {formData.province ? 'Select District' : 'Select province first'}
       </option>
-      {(PROVINCE_DISTRICTS[formData.province] || []).map((d) => (
+      {getDistricts(formData.province).map((d) => (
         <option key={d} value={d}>{d}</option>
       ))}
     </select>
   </div>
   <div>
     <label>Municipality</label>
-    <input type="text" name="municipality" value={formData.municipality} onChange={handleChange} required />
-  </div>
-  <div>
-    <label>Ward Number</label>
-    <input type="number" name="wardNumber" min="1" value={formData.wardNumber} onChange={handleChange} required />
-  </div>
-  <div>
-    <label>Tole</label>
-    <input type="text" name="tole" value={formData.tole} onChange={handleChange} required />
+    <select
+      name="municipality"
+      value={formData.municipality}
+      onChange={handleChange}
+      required
+      disabled={!formData.district}
+    >
+      <option value="">
+        {formData.district ? 'Select Municipality' : 'Select district first'}
+      </option>
+      {getMunicipalities(formData.province, formData.district).map((m) => (
+        <option key={m} value={m}>{m}</option>
+      ))}
+    </select>
   </div>
 </div>
         <h3 className="form-section">Household & Orchard</h3>

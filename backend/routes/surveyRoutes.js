@@ -11,6 +11,6 @@ router.get('/stats', protect, getSurveyStats);
 router.get('/:id', protect, getSurveyById);
 router.put('/:id', protect, updateSurvey);
 router.delete('/:id', protect, deleteSurvey);
-router.patch('/:id/verify', protect, authorize('admin'), verifySurvey);
+router.patch('/:id/verify', protect, authorize('surveyor'), verifySurvey);
 
 export default router;

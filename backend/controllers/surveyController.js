@@ -184,10 +184,10 @@ export const deleteSurvey = async (req, res) => {
 
 export const verifySurvey = async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== 'surveyor') {
       return res.status(403).json({
         success: false,
-        message: 'Only admins can verify surveys',
+        message: 'Only officers can verify surveys',
       });
     }
 
@@ -195,9 +195,14 @@ export const verifySurvey = async (req, res) => {
 
     const survey = await Survey.findByIdAndUpdate(
       req.params.id,
-      { status, verificationNotes },
+      {
+        status,
+        verificationNotes,
+        verifiedBy: req.user.id,
+        verifiedAt: new Date(),
+      },
       { new: true }
-    );
+    ).populate('verifiedBy', 'name email');
 
     logger.info(`Survey verified: ${survey._id}`);
 

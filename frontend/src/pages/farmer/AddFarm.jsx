@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import '../../styles/forms.css';
+import { getProvinces, getDistricts, getMunicipalities } from '../../utils/nepalLocations';
 
 const VARIETIES = ['Maldaha', 'Amrapali', 'Sindhure', 'Langra', 'Dusehri', 'Chaunsa'];
 
@@ -15,6 +16,7 @@ export default function AddFarm() {
     description: '',
     ward: '',
     tole: '',
+    province: '',
     district: '',
     municipality: '',
     orchardAreaKatha: '',
@@ -31,7 +33,17 @@ export default function AddFarm() {
   );
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const updated = { ...formData, [name]: value };
+
+    if (name === 'province') {
+      updated.district = '';
+      updated.municipality = '';
+    } else if (name === 'district') {
+      updated.municipality = '';
+    }
+
+    setFormData(updated);
   };
 
   const handleVarietyChange = (variety, value) => {
@@ -53,6 +65,7 @@ export default function AddFarm() {
         location: {
           ward: formData.ward ? Number(formData.ward) : undefined,
           tole: formData.tole || undefined,
+          province: formData.province || undefined,
           district: formData.district || undefined,
           municipality: formData.municipality || undefined,
         },
@@ -91,20 +104,53 @@ export default function AddFarm() {
         <h3 className="form-section">Location</h3>
         <div className="form-grid">
           <div>
+            <label>Province</label>
+            <select name="province" value={formData.province} onChange={handleChange}>
+              <option value="">Select Province</option>
+              {getProvinces().map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label>District</label>
+            <select
+              name="district"
+              value={formData.district}
+              onChange={handleChange}
+              disabled={!formData.province}
+            >
+              <option value="">
+                {formData.province ? 'Select District' : 'Select province first'}
+              </option>
+              {getDistricts(formData.province).map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label>Municipality</label>
+            <select
+              name="municipality"
+              value={formData.municipality}
+              onChange={handleChange}
+              disabled={!formData.district}
+            >
+              <option value="">
+                {formData.district ? 'Select Municipality' : 'Select district first'}
+              </option>
+              {getMunicipalities(formData.province, formData.district).map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+          <div>
             <label>Ward</label>
             <input type="number" name="ward" value={formData.ward} onChange={handleChange} />
           </div>
           <div>
             <label>Tole</label>
             <input type="text" name="tole" value={formData.tole} onChange={handleChange} />
-          </div>
-          <div>
-            <label>District</label>
-            <input type="text" name="district" value={formData.district} onChange={handleChange} />
-          </div>
-          <div>
-            <label>Municipality</label>
-            <input type="text" name="municipality" value={formData.municipality} onChange={handleChange} />
           </div>
         </div>
 

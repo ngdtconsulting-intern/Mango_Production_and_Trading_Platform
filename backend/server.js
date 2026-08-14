@@ -7,6 +7,7 @@ import http from 'http';
 import { initChatSocket } from './socket/chatSocket.js';
 import chatRoutes from './routes/chatRoutes.js';
 
+
 // Load env FIRST before anything else
 dotenv.config();
 console.log(`[${process.env.CLOUDINARY_NAME}]`, `[${process.env.CLOUDINARY_API_KEY}]`, `[${process.env.CLOUDINARY_API_SECRET}]`);
@@ -77,6 +78,10 @@ app.use('/api/analytics', analyticsRoutes);
 
 //Chat Routes
 app.use('/api/chat', chatRoutes);
+
+// Report Routes
+import reportRoutes from './routes/reportRoutes.js';
+app.use('/api/reports', reportRoutes);
 
 // ============================================
 // Health Check

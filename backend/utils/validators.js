@@ -1,12 +1,11 @@
 import { body, validationResult, query, param } from 'express-validator';
 
 export const validateSurveyData = [
-  body('farmerName').trim().notEmpty().withMessage('Farmer name is required'),
-  body('phone').matches(/^\d{10}$/).withMessage('Phone must be 10 digits'),
   body('age').isInt({ min: 18, max: 100 }).withMessage('Age must be between 18 and 100'),
   body('educationLevel').notEmpty().withMessage('Education level is required'),
-  body('wardNumber').isInt({ min: 1 }).withMessage('Ward number must be positive'),
-  body('tole').trim().notEmpty().withMessage('Tole is required'),
+  body('province').trim().notEmpty().withMessage('Province is required'),
+  body('district').trim().notEmpty().withMessage('District is required'),
+  body('municipality').trim().notEmpty().withMessage('Municipality is required'),
   body('householdMembers').isInt({ min: 1 }).withMessage('Household members must be at least 1'),
   body('orchardAreaKatha').isFloat({ min: 0.1 }).withMessage('Orchard area must be greater than 0'),
   body('totalMangoTrees').isInt({ min: 1 }).withMessage('Total trees must be at least 1'),
@@ -31,7 +30,21 @@ export const validateRegistration = [
     .withMessage('Password must contain uppercase')
     .matches(/[0-9]/)
     .withMessage('Password must contain numbers'),
-  body('role').isIn(['farmer', 'trader', 'surveyor']).withMessage('Invalid role'),
+  body('role').optional().isIn(['farmer', 'trader']).withMessage('Invalid role'),
+];
+
+export const validateStaffCreation = [
+  body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+  body('email').isEmail().withMessage('Valid email required'),
+  body('phone').matches(/^\d{10}$/).withMessage('Phone must be 10 digits'),
+  body('password')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters')
+    .matches(/[A-Z]/)
+    .withMessage('Password must contain uppercase')
+    .matches(/[0-9]/)
+    .withMessage('Password must contain numbers'),
+  body('role').isIn(['admin', 'surveyor']).withMessage('Role must be admin or surveyor (officer)'),
 ];
 
 export const handleValidationErrors = (req, res, next) => {
@@ -73,6 +86,7 @@ export default {
   validateSurveyData,
   validateLoginData,
   validateRegistration,
+  validateStaffCreation,
   handleValidationErrors,
   validatePagination,
   validateMarketPrice,

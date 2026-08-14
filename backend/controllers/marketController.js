@@ -3,10 +3,10 @@ import logger from '../utils/logger.js';
 
 export const createOrUpdatePrice = async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== 'surveyor') {
       return res.status(403).json({
         success: false,
-        message: 'Only admins can update prices',
+        message: 'Only officers can update prices',
       });
     }
 

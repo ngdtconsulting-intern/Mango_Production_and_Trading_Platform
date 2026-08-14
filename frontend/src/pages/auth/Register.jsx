@@ -3,19 +3,19 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { register } from '../../store/authSlice';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { getProvinces, getDistricts, getMunicipalities } from '../../utils/nepalLocations';
 const initialForm = {
   name: '',
   email: '',
   phone: '',
   password: '',
   role: 'farmer',
-  address: { ward: '', tole: '', district: '', municipality: '' },
+  address: { province: '', district: '', municipality: '', ward: '', tole: '' },
 };
 
 const ROLES = [
   { value: 'farmer', label: 'Farmer', icon: '🌳', desc: 'Register orchards & surveys' },
   { value: 'trader', label: 'Trader', icon: '📦', desc: 'Post requirements & buy' },
-  { value: 'admin', label: 'Admin', icon: '⚙️', desc: 'Manage the platform' },
 ];
 
 export default function Register() {
@@ -30,7 +30,18 @@ export default function Register() {
     const { name, value } = e.target;
     if (name.startsWith('address.')) {
       const key = name.split('.')[1];
-      setForm({ ...form, address: { ...form.address, [key]: value } });
+      const updatedAddress = { ...form.address, [key]: value };
+
+      // Cascading resets: changing province clears district+municipality,
+      // changing district clears municipality
+      if (key === 'province') {
+        updatedAddress.district = '';
+        updatedAddress.municipality = '';
+      } else if (key === 'district') {
+        updatedAddress.municipality = '';
+      }
+
+      setForm({ ...form, address: updatedAddress });
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -78,7 +89,7 @@ export default function Register() {
           <form className="auth-card auth-card--wide" onSubmit={handleSubmit}>
             <div className="auth-card__brand auth-card__brand--mobile">🥭 Aam Bazaar</div>
             <h1>Create an account</h1>
-            <p className="auth-card__subtitle">Join as a farmer, trader, or admin.</p>
+            <p className="auth-card__subtitle">Join as a farmer or trader.</p>
 
             {error && <div className="status status--error">{error}</div>}
 
@@ -145,13 +156,47 @@ export default function Register() {
               </label>
 
               <label className="field">
+                <span>Province</span>
+                <select name="address.province" value={form.address.province} onChange={handleChange}>
+                  <option value="">Select province</option>
+                  {getProvinces().map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="field">
                 <span>District</span>
-                <input name="address.district" value={form.address.district} onChange={handleChange} placeholder="e.g. Siraha" />
+                <select
+                  name="address.district"
+                  value={form.address.district}
+                  onChange={handleChange}
+                  disabled={!form.address.province}
+                >
+                  <option value="">
+                    {form.address.province ? 'Select district' : 'Select province first'}
+                  </option>
+                  {getDistricts(form.address.province).map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
               </label>
 
               <label className="field">
                 <span>Municipality</span>
-                <input name="address.municipality" value={form.address.municipality} onChange={handleChange} placeholder="e.g. Lahan" />
+                <select
+                  name="address.municipality"
+                  value={form.address.municipality}
+                  onChange={handleChange}
+                  disabled={!form.address.district}
+                >
+                  <option value="">
+                    {form.address.district ? 'Select municipality' : 'Select district first'}
+                  </option>
+                  {getMunicipalities(form.address.province, form.address.district).map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
               </label>
 
               <label className="field">

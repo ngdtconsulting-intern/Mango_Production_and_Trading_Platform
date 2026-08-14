@@ -11,6 +11,7 @@ const farmSchema = new mongoose.Schema(
     description: String,
 
     location: {
+      province: String,
       ward: Number,
       tole: String,
       district: String,

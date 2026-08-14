@@ -12,17 +12,13 @@ const surveySchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    farmerName: { type: String, required: true },
-    phone: { type: String, required: true },
     age: { type: Number, required: true, min: 18, max: 100 },
     educationLevel: { type: String, required: true },
 
-    // Address
-province: { type: String, required: true },
-district: { type: String, required: true },
-municipality: { type: String, required: true },
-wardNumber: { type: Number, required: true },
-tole: { type: String, required: true },
+    // Farm location (may differ from farmer's home address)
+    province: { type: String, required: true },
+    district: { type: String, required: true },
+    municipality: { type: String, required: true },
 
     // Household
     householdMembers: { type: Number, required: true, min: 1 },
@@ -68,6 +64,11 @@ tole: { type: String, required: true },
       default: 'submitted',
     },
     verificationNotes: String,
+    verifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    verifiedAt: Date,
   },
   { timestamps: true }
 );

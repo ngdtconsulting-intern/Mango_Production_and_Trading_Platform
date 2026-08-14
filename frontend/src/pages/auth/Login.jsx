@@ -5,12 +5,18 @@ import toast from 'react-hot-toast';
 import { login } from '../../store/authSlice';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 
+const LOGIN_MODES = [
+  { value: 'user', label: 'Farmer / Trader', icon: '🥭' },
+  { value: 'officer', label: 'Officer / Admin', icon: '🛡️' },
+];
+
 export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [loginMode, setLoginMode] = useState('user');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,6 +31,7 @@ export default function Login() {
       const role = result.payload.role;
       if (role === 'trader') navigate('/trader/dashboard');
       else if (role === 'admin') navigate('/admin/dashboard');
+      else if (role === 'surveyor') navigate('/officer/dashboard');
       else navigate('/farmer/dashboard');
     } else {
       toast.error(result.payload || 'Login failed');
@@ -56,6 +63,20 @@ export default function Login() {
             <div className="auth-card__brand auth-card__brand--mobile">🥭 Aam Bazaar</div>
             <h1>Log in</h1>
             <p className="auth-card__subtitle">Enter your details to access your dashboard.</p>
+
+            <div className="role-select" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 22 }}>
+              {LOGIN_MODES.map((m) => (
+                <button
+                  type="button"
+                  key={m.value}
+                  className={`role-card ${loginMode === m.value ? 'role-card--active' : ''}`}
+                  onClick={() => setLoginMode(m.value)}
+                >
+                  <span className="role-card__icon">{m.icon}</span>
+                  <span className="role-card__label">{m.label}</span>
+                </button>
+              ))}
+            </div>
 
             <div className="field-grid field-grid--single">
               <label className="field">
@@ -98,9 +119,15 @@ export default function Login() {
               {loading ? <span className="btn__spinner" /> : 'Log in'}
             </button>
 
-            <p className="auth-card__footer">
-              Don't have an account? <Link to="/register">Register</Link>
-            </p>
+            {loginMode === 'user' ? (
+              <p className="auth-card__footer">
+                Don't have an account? <Link to="/register">Register</Link>
+              </p>
+            ) : (
+              <p className="auth-card__footer">
+                Officer and admin accounts are created by an administrator — contact your admin if you need access.
+              </p>
+            )}
           </form>
         </main>
       </div>

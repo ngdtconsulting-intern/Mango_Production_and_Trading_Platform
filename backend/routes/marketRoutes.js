@@ -4,7 +4,7 @@ import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/', protect, authorize('admin'), createOrUpdatePrice);
+router.post('/', protect, authorize('surveyor'), createOrUpdatePrice);
 router.get('/', getPrices);
 router.get('/latest', getLatestPrices);
 router.get('/trends', getPriceTrends);
