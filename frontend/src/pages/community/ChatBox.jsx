@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
+import { FiMapPin, FiPaperclip, FiCamera } from 'react-icons/fi';
 import api from '../../services/api';
 import '../../styles/community.css';
 
@@ -107,13 +108,13 @@ export default function ChatBox() {
           {connected ? 'Connected' : 'Connecting...'}
         </span>
       </div>
-      <p className="community-subtitle">Chat with other farmers — ask questions, share updates, get help.</p>
+      <p className="community-subtitle">Chat with other farmers: ask questions, share updates, get help.</p>
 
       <div className="chat-window">
         {loading ? (
           <p className="chat-loading">Loading messages...</p>
         ) : messages.length === 0 ? (
-          <p className="chat-loading">No messages yet — start the conversation.</p>
+          <p className="chat-loading">No messages yet. Start the conversation.</p>
         ) : (
           messages.map((msg) => (
             <div
@@ -125,7 +126,7 @@ export default function ChatBox() {
                 <span className="chat-role-tag">{msg.senderRole}</span>
                 {(msg.district || msg.area) && (
                   <span className="chat-location-tag">
-                    📍 {msg.area ? `${msg.area}, ` : ''}{msg.district}
+                    <FiMapPin size={11} /> {msg.area ? `${msg.area}, ` : ''}{msg.district}
                   </span>
                 )}
               </div>
@@ -145,7 +146,7 @@ export default function ChatBox() {
       <form className="chat-composer" onSubmit={handleSend}>
         {imageFile && (
           <div className="chat-attachment-preview">
-            📎 {imageFile.name}
+            <FiPaperclip size={14} /> {imageFile.name}
             <button type="button" onClick={() => { setImageFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}>
               ×
             </button>
@@ -153,7 +154,7 @@ export default function ChatBox() {
         )}
         <div className="chat-composer-row">
           <label className="chat-attach-btn">
-            📷
+            <FiCamera />
             <input
               type="file"
               accept="image/*"

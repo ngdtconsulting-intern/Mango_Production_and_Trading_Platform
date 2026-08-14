@@ -86,11 +86,27 @@
   top: 0; left: 0; right: 0;
   height: 3px;
   background: var(--color-border);
+  transition: height 0.15s ease;
 }
 
 .stat-card.green::before  { background: var(--color-orchard); }
 .stat-card.blue::before   { background: var(--color-info); }
 .stat-card.purple::before { background: var(--color-violet); }
+.stat-card.gold::before   { background: var(--color-gold); }
+
+.stat-card--clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.stat-card--clickable:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.stat-card--active { box-shadow: var(--shadow-md); }
+.stat-card--active::before { height: 6px; }
+
+.stat-card-icon { font-size: 22px; margin-bottom: 10px; color: var(--color-bark); line-height: 1; }
+.stat-card.green .stat-card-icon  { color: var(--color-orchard-dark); }
+.stat-card.blue .stat-card-icon   { color: var(--color-info); }
+.stat-card.purple .stat-card-icon { color: var(--color-violet); }
+.stat-card.gold .stat-card-icon   { color: var(--color-gold-dark); }
 
 .stat-label {
   font-size: 12px;
@@ -323,4 +339,218 @@
   border-radius: var(--radius-sm);
   padding: 10px 12px;
   margin: 6px 0;
+}
+
+/* ---------- Quick action cards (dashboard top row) ---------- */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.quick-action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 18px 16px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-ink);
+  cursor: pointer;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.quick-action-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-orchard);
+}
+
+.quick-action-icon {
+  font-size: 22px;
+  color: var(--color-orchard);
+}
+
+/* ---------- Dashboard sections (Market Prices / Buying Requirements / Farms) ---------- */
+.dashboard-section {
+  margin-bottom: 36px;
+}
+
+.dashboard-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dashboard-section-head h2 {
+  margin: 0;
+}
+
+.view-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--color-orchard);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.view-all-link:hover { color: var(--color-orchard-dark); text-decoration: underline; }
+
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.snapshot-card {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.snapshot-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-orchard);
+}
+
+.snapshot-card--static { cursor: default; }
+.snapshot-card--static:hover { transform: none; box-shadow: var(--shadow-sm); border-color: var(--color-border); }
+
+.snapshot-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.snapshot-card h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.snapshot-card__variety {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 0 10px;
+  font-size: 13px;
+  color: var(--color-bark);
+}
+
+.snapshot-card__price {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.snapshot-card__price span {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--color-bark);
+  margin-left: 4px;
+}
+
+/* re-use the market page's status badges here so colors stay consistent */
+.snapshot-card .supply-badge.abundant { background: #e4f2e9; color: var(--color-orchard-dark); }
+.snapshot-card .supply-badge.normal   { background: #eef1ec; color: var(--color-bark); }
+.snapshot-card .supply-badge.scarce   { background: #fbeaea; color: var(--color-clay); }
+.snapshot-card .supply-badge,
+.snapshot-card .quality-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.snapshot-card .quality-badge.good { background: #e4f2e9; color: var(--color-orchard-dark); }
+
+/* ---------- Report cards (officer dashboard) ---------- */
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.report-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.report-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-orchard);
+}
+
+.report-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.report-card-reporter {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.report-card-reporter span {
+  font-size: 12px;
+  color: var(--color-bark);
+}
+
+.report-card-message {
+  font-size: 14px;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.report-card-image {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
+.report-card-meta {
+  font-size: 12px;
+  color: var(--color-bark);
+}
+
+.report-card-actions {
+  display: flex;
+  justify-content: flex-end;
 }

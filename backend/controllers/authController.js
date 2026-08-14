@@ -24,7 +24,7 @@ export const register = async (req, res) => {
       });
     }
 
-     const publicRole = role === 'trader' ? 'trader' : 'farmer';
+    const publicRole = role === 'trader' ? 'trader' : 'farmer';
 
     // Create user
     user = await User.create({
@@ -38,6 +38,7 @@ export const register = async (req, res) => {
     });
 
     const token = generateToken(user._id);
+    user.password = undefined;
 
     logger.info(`User registered: ${user.email} (${user.role})`);
 
@@ -45,12 +46,7 @@ export const register = async (req, res) => {
       success: true,
       message: 'User registered successfully',
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user,
     });
   } catch (error) {
     logger.error(`Registration error: ${error.message}`);
@@ -86,6 +82,7 @@ export const login = async (req, res) => {
     await user.save();
 
     const token = generateToken(user._id);
+    user.password = undefined;
 
     logger.info(`User logged in: ${user.email}`);
 
@@ -93,12 +90,7 @@ export const login = async (req, res) => {
       success: true,
       message: 'Login successful',
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user,
     });
   } catch (error) {
     logger.error(`Login error: ${error.message}`);
@@ -157,10 +149,26 @@ export const logout = async (req, res) => {
   });
 };
 
+export const adminExists = async (req, res) => {
+  try {
+    const existingAdmin = await User.findOne({ role: 'admin' });
+    res.json({
+      success: true,
+      exists: !!existingAdmin,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export default {
   register,
   login,
   getCurrentUser,
   updateProfile,
   logout,
+  adminExists,
 };

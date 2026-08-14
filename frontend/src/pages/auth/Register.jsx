@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { register } from '../../store/authSlice';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiUser, FiMail, FiPhone, FiLock, FiSun, FiPackage, FiCheck } from 'react-icons/fi';
 import { getProvinces, getDistricts, getMunicipalities } from '../../utils/nepalLocations';
+import ThemeToggle from '../../components/ThemeToggle';
+import Logo from '../../components/Logo';
 const initialForm = {
   name: '',
   email: '',
@@ -13,9 +15,12 @@ const initialForm = {
   address: { province: '', district: '', municipality: '', ward: '', tole: '' },
 };
 
+// Admin is not selectable here. The platform owner's admin account is
+// created directly (e.g. via the backend seed script / database), never
+// through public self-registration.
 const ROLES = [
-  { value: 'farmer', label: 'Farmer', icon: '🌳', desc: 'Register orchards & surveys' },
-  { value: 'trader', label: 'Trader', icon: '📦', desc: 'Post requirements & buy' },
+  { value: 'farmer', label: 'Farmer', icon: FiSun, desc: 'Register orchards & surveys' },
+  { value: 'trader', label: 'Trader', icon: FiPackage, desc: 'Post requirements & buy' },
 ];
 
 export default function Register() {
@@ -67,33 +72,32 @@ export default function Register() {
 
   return (
     <div className="auth-page">
+      <ThemeToggle className="auth-page__theme-toggle" />
       <div className="auth-shell">
         <aside className="auth-side">
-          <Link to="/" className="auth-side__brand">
-            <span className="navbar__logo">🥭</span> Aam Bazaar
-          </Link>
+          <Logo size="lg" dark className="auth-side__brand" />
           <h2 className="auth-side__title">Join Nepal's mango supply chain, digitally.</h2>
           <p className="auth-side__text">
-            One account. Farmers, traders, and admins all work from the same
-            platform — no spreadsheets, no middlemen.
+            One account. Farmers and traders work from the same
+            platform. No spreadsheets, no middlemen.
           </p>
           <ul className="auth-side__list">
-            <li>✅ Free to register</li>
-            <li>✅ Role-based dashboards</li>
-            <li>✅ Direct farmer–trader matching</li>
+            <li><span className="auth-side__list-icon"><FiCheck /></span> Free to register</li>
+            <li><span className="auth-side__list-icon"><FiCheck /></span> Role-based dashboards</li>
+            <li><span className="auth-side__list-icon"><FiCheck /></span> Direct farmer–trader matching</li>
           </ul>
           <div className="auth-side__glow" />
         </aside>
 
         <main className="auth-main">
           <form className="auth-card auth-card--wide" onSubmit={handleSubmit}>
-            <div className="auth-card__brand auth-card__brand--mobile">🥭 Aam Bazaar</div>
+            <Logo size="sm" className="auth-card__brand auth-card__brand--mobile" />
             <h1>Create an account</h1>
-            <p className="auth-card__subtitle">Join as a farmer or trader.</p>
+            <p className="auth-card__subtitle">Join as a farmer or a trader.</p>
 
             {error && <div className="status status--error">{error}</div>}
 
-            <div className="role-select">
+            <div className="role-select role-select--2">
               {ROLES.map((r) => (
                 <button
                   type="button"
@@ -101,7 +105,7 @@ export default function Register() {
                   className={`role-card ${form.role === r.value ? 'role-card--active' : ''}`}
                   onClick={() => handleRoleSelect(r.value)}
                 >
-                  <span className="role-card__icon">{r.icon}</span>
+                  <span className="role-card__icon"><r.icon /></span>
                   <span className="role-card__label">{r.label}</span>
                   <span className="role-card__desc">{r.desc}</span>
                 </button>
@@ -111,30 +115,40 @@ export default function Register() {
             <div className="field-grid">
               <label className="field">
                 <span>Full name</span>
-                <input name="name" value={form.name} onChange={handleChange} required placeholder="e.g. Sandhyaa Rai" />
+                <div className="field__icon">
+                  <FiUser className="field__icon-glyph" />
+                  <input name="name" value={form.name} onChange={handleChange} required placeholder="e.g. Sandhyaa Rai" />
+                </div>
               </label>
 
               <label className="field">
                 <span>Email</span>
-                <input type="email" name="email" value={form.email} onChange={handleChange} required placeholder="you@example.com" />
+                <div className="field__icon">
+                  <FiMail className="field__icon-glyph" />
+                  <input type="email" name="email" value={form.email} onChange={handleChange} required placeholder="you@example.com" />
+                </div>
               </label>
 
               <label className="field">
                 <span>Phone (10 digits)</span>
-                <input
-                  name="phone"
-                  value={form.phone}
-                  onChange={handleChange}
-                  pattern="[0-9]{10}"
-                  title="10 digit phone number"
-                  required
-                  placeholder="98XXXXXXXX"
-                />
+                <div className="field__icon">
+                  <FiPhone className="field__icon-glyph" />
+                  <input
+                    name="phone"
+                    value={form.phone}
+                    onChange={handleChange}
+                    pattern="[0-9]{10}"
+                    title="10 digit phone number"
+                    required
+                    placeholder="98XXXXXXXX"
+                  />
+                </div>
               </label>
 
               <label className="field">
                 <span>Password (min 8 chars)</span>
-                <div className="field__password">
+                <div className="field__icon field__password">
+                  <FiLock className="field__icon-glyph" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     name="password"

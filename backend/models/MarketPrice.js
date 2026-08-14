@@ -2,7 +2,14 @@ import mongoose from 'mongoose';
 
 const marketPriceSchema = new mongoose.Schema(
   {
-    market: { type: String, required: true },
+    // Scoped to the setting officer's coverage area, the same location
+    // model used everywhere else (reports, surveys, buying requirements),
+    // rather than a fixed list of named wholesale markets disconnected
+    // from where anyone actually is.
+    province: String,
+    district: { type: String, required: true },
+    municipality: String,
+
     variety: { type: String, required: true },
     date: { type: Date, default: Date.now },
 
@@ -21,14 +28,9 @@ const marketPriceSchema = new mongoose.Schema(
       default: 'normal',
     },
 
-    source: {
-      type: String,
-      enum: ['manual', 'api', 'survey'],
-      default: 'manual',
-    },
-    verifiedBy: mongoose.Schema.Types.ObjectId,
+    setBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
-  { timestamps: true, indexes: [{ market: 1, variety: 1, date: -1 }] }
+  { timestamps: true, indexes: [{ district: 1, variety: 1, date: -1 }] }
 );
 
 // No next() needed

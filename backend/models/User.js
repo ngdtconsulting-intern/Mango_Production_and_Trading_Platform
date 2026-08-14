@@ -59,6 +59,17 @@ const userSchema = new mongoose.Schema(
       enum: ['wholesaler', 'retailer', 'exporter', 'processor'],
     },
 
+    // Surveyor (officer) specific: the jurisdiction they're assigned to
+    // cover, set by the admin at creation time. Deliberately separate from
+    // `address` (their personal home address) since an officer's duty
+    // station and where they live aren't guaranteed to be the same place,
+    // and a district may eventually need more than one covering officer.
+    coverageArea: {
+      province: String,
+      district: String,
+      municipality: String,
+    },
+
     // Metadata
     lastLogin: Date,
     loginCount: { type: Number, default: 0 },

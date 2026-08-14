@@ -1,6 +1,8 @@
 import MarketPrice from '../models/MarketPrice.js';
 import logger from '../utils/logger.js';
 
+// Officers set prices for their own assigned coverage area only, one entry
+// per variety per day (re-submitting the same day updates it in place).
 export const createOrUpdatePrice = async (req, res) => {
   try {
     if (req.user.role !== 'surveyor') {
@@ -10,12 +12,20 @@ export const createOrUpdatePrice = async (req, res) => {
       });
     }
 
-    const { market, variety, wholesalePricePerKg, retailPricePerKg, quality, supply } = req.body;
+    if (!req.user.coverageArea?.district) {
+      return res.status(400).json({
+        success: false,
+        message: 'Your account has no coverage area assigned, contact an admin',
+      });
+    }
+
+    const { variety, wholesalePricePerKg, retailPricePerKg, quality, supply } = req.body;
+    const { province, district, municipality } = req.user.coverageArea;
 
     const today = new Date().setHours(0, 0, 0, 0);
 
     let price = await MarketPrice.findOne({
-      market,
+      district,
       variety,
       date: { $gte: new Date(today) },
     });
@@ -25,22 +35,24 @@ export const createOrUpdatePrice = async (req, res) => {
       price.retailPricePerKg = retailPricePerKg;
       price.quality = quality;
       price.supply = supply;
-      price.verifiedBy = req.user.id;
+      price.setBy = req.user.id;
     } else {
       price = new MarketPrice({
-        market,
+        province,
+        district,
+        municipality,
         variety,
         wholesalePricePerKg,
         retailPricePerKg,
         quality,
         supply,
-        verifiedBy: req.user.id,
+        setBy: req.user.id,
       });
     }
 
     await price.save();
 
-    logger.info(`Price updated: ${market} - ${variety}`);
+    logger.info(`Price updated: ${district} - ${variety} by ${req.user.email}`);
 
     res.json({
       success: true,
@@ -55,13 +67,35 @@ export const createOrUpdatePrice = async (req, res) => {
   }
 };
 
+// Prices this officer has set for their own coverage area (for the
+// officer's own Market Prices management page).
+export const getMyPrices = async (req, res) => {
+  try {
+    if (!req.user.coverageArea?.district) {
+      return res.json({ success: true, prices: [] });
+    }
+
+    const today = new Date().setHours(0, 0, 0, 0);
+
+    const prices = await MarketPrice.find({
+      district: req.user.coverageArea.district,
+      date: { $gte: new Date(today) },
+    }).sort({ variety: 1 });
+
+    res.json({ success: true, prices });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const getPrices = async (req, res) => {
   try {
-    const { market, variety, days = 7, page = 1, limit = 50 } = req.query;
+    const { province, district, variety, days = 7, page = 1, limit = 50 } = req.query;
     const skip = (page - 1) * limit;
 
     const filter = {};
-    if (market) filter.market = market;
+    if (province) filter.province = province;
+    if (district) filter.district = district;
     if (variety) filter.variety = variety;
 
     const startDate = new Date();
@@ -92,18 +126,19 @@ export const getPrices = async (req, res) => {
 
 export const getLatestPrices = async (req, res) => {
   try {
-    const { market, variety } = req.query;
+    const { province, district, variety } = req.query;
 
     const match = {};
-    if (market) match.market = market;
+    if (province) match.province = province;
+    if (district) match.district = district;
     if (variety) match.variety = variety;
 
     const latestPrices = await MarketPrice.aggregate([
       { $match: match },
-      { $sort: { market: 1, variety: 1, date: -1 } },
+      { $sort: { district: 1, variety: 1, date: -1 } },
       {
         $group: {
-          _id: { market: '$market', variety: '$variety' },
+          _id: { district: '$district', variety: '$variety' },
           latest: { $first: '$$ROOT' },
         },
       },
@@ -123,10 +158,10 @@ export const getLatestPrices = async (req, res) => {
 
 export const getPriceTrends = async (req, res) => {
   try {
-    const { market, variety, days = 30 } = req.query;
+    const { district, variety, days = 30 } = req.query;
 
     const filter = {};
-    if (market) filter.market = market;
+    if (district) filter.district = district;
     if (variety) filter.variety = variety;
 
     const startDate = new Date();
@@ -147,38 +182,10 @@ export const getPriceTrends = async (req, res) => {
   }
 };
 
-export const getPriceComparison = async (req, res) => {
-  try {
-    const { market1, market2, variety } = req.query;
-
-    if (!market1 || !market2 || !variety) {
-      return res.status(400).json({
-        success: false,
-        message: 'market1, market2, and variety are required',
-      });
-    }
-
-    const prices = await MarketPrice.find({
-      market: { $in: [market1, market2] },
-      variety,
-    }).sort({ date: -1 });
-
-    res.json({
-      success: true,
-      prices,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
 export default {
   createOrUpdatePrice,
+  getMyPrices,
   getPrices,
   getLatestPrices,
-  getPriceComparison,
   getPriceTrends,
 };

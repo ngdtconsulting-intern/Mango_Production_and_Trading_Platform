@@ -24,7 +24,7 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  background: var(--gradient-ripen);
+  background: var(--color-mango-accent);
 }
 
 .post-composer textarea {

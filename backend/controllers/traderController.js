@@ -1,7 +1,18 @@
 import BuyingRequirement from '../models/BuyingRequirement.js';
 import User from '../models/User.js';
 import Survey from '../models/Survey.js';
+import MarketPrice from '../models/MarketPrice.js';
 import logger from '../utils/logger.js';
+
+// How far a trader's offered price may sit from the officer's reference
+// (wholesale) price for that variety/district, depending on the quality
+// they're buying: fair quality is worth less than the reference, premium
+// is worth more, good sits close to it either way.
+const QUALITY_PRICE_OFFSET = {
+  fair: { min: -10, max: -1 },
+  good: { min: -5, max: 5 },
+  premium: { min: 1, max: 10 },
+};
 
 export const createBuyingRequirement = async (req, res) => {
   try {
@@ -10,6 +21,26 @@ export const createBuyingRequirement = async (req, res) => {
         success: false,
         message: 'Only traders can create buying requirements',
       });
+    }
+
+    const { variety, quality, location, budget } = req.body;
+
+    if (location?.district && variety) {
+      const referencePrice = await MarketPrice.findOne({ district: location.district, variety }).sort({ date: -1 });
+
+      if (referencePrice) {
+        const offset = QUALITY_PRICE_OFFSET[quality] || QUALITY_PRICE_OFFSET.good;
+        const base = referencePrice.wholesalePricePerKg;
+        const allowedMin = base + offset.min;
+        const allowedMax = base + offset.max;
+
+        if (budget?.minPricePerKg < allowedMin || budget?.maxPricePerKg > allowedMax) {
+          return res.status(400).json({
+            success: false,
+            message: `For ${quality} quality ${variety} in ${location.district}, your price must be between Rs. ${allowedMin} and Rs. ${allowedMax}/kg (officer reference price: Rs. ${base}/kg).`,
+          });
+        }
+      }
     }
 
     const requirement = await BuyingRequirement.create({
@@ -34,13 +65,22 @@ export const createBuyingRequirement = async (req, res) => {
 
 export const getBuyingRequirements = async (req, res) => {
   try {
-    const { status, variety, district, page = 1, limit = 10 } = req.query;
+    const { status, variety, province, district, municipality, page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
     const filter = { status: { $ne: 'cancelled' } };
     if (status) filter.status = status;
     if (variety) filter.variety = variety;
+    if (province) filter['location.province'] = province;
     if (district) filter['location.district'] = district;
+    if (municipality) filter['location.municipality'] = municipality;
+
+    // Requirements past their deadline are no longer live opportunities, so
+    // once browsing the open/default set, exclude anything whose date has
+    // passed rather than relying on a scheduled job to flip their status.
+    if (!status || status === 'open') {
+      filter.requiredByDate = { $gte: new Date() };
+    }
 
     const requirements = await BuyingRequirement.find(filter)
       .select('-responses')
@@ -57,6 +97,34 @@ export const getBuyingRequirements = async (req, res) => {
       pages: Math.ceil(total / limit),
       requirements,
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// A farmer's own request history — every requirement they've responded to,
+// with only their own response attached (never anyone else's).
+export const getMyResponses = async (req, res) => {
+  try {
+    const requirements = await BuyingRequirement.find({ 'responses.farmerId': req.user.id })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const requests = requirements.map((r) => {
+      const response = r.responses.find((res) => res.farmerId.toString() === req.user.id);
+      return {
+        _id: r._id,
+        variety: r.variety,
+        quantityMT: r.quantityMT,
+        budget: r.budget,
+        location: r.location,
+        requiredByDate: r.requiredByDate,
+        requirementStatus: r.status,
+        response,
+      };
+    });
+
+    res.json({ success: true, requests });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -108,15 +176,30 @@ export const getBuyingRequirementById = async (req, res) => {
     const isAdmin = req.user.role === 'admin';
 
     if (isOwnerTrader || isAdmin) {
-      // Trader who owns this requirement (or admin) sees every request,
-      // but farmer contact info is only attached once a request is accepted.
+      // Rejected applicants never surface to the trader. While still open,
+      // show the pending applicants to decide between; once a farmer is
+      // accepted the deal has moved forward, so only that farmer is shown
+      // (with contact info and a production snapshot) instead of the list.
+      const visible = requirement.status === 'open'
+        ? requirement.responses.filter((r) => r.status === 'pending')
+        : requirement.responses.filter((r) => r.status === 'accepted');
+
       requirement.responses = await Promise.all(
-        requirement.responses.map(async (r) => {
-          if (r.status === 'accepted') {
-            const farmer = await User.findById(r.farmerId).select('phone email');
-            return { ...r, farmerPhone: farmer?.phone, farmerEmail: farmer?.email };
-          }
-          return r;
+        visible.map(async (r) => {
+          if (r.status !== 'accepted') return r;
+          const [farmer, latestSurvey] = await Promise.all([
+            User.findById(r.farmerId).select('phone email'),
+            Survey.findOne({ farmerId: r.farmerId }).sort({ createdAt: -1 }),
+          ]);
+          return {
+            ...r,
+            farmerPhone: farmer?.phone,
+            farmerEmail: farmer?.email,
+            farmerStats: {
+              recentProduction: latestSurvey?.totalProductionKg || 0,
+              recentEarnings: latestSurvey?.totalEarnings2082 || 0,
+            },
+          };
         })
       );
       return res.json({ success: true, requirement });
@@ -154,6 +237,13 @@ export const addResponse = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Requirement not found',
+      });
+    }
+
+    if (requirement.requiredByDate && requirement.requiredByDate < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'This requirement has passed its deadline and can no longer accept requests',
       });
     }
 
@@ -294,6 +384,14 @@ export const updateResponseStatus = async (req, res) => {
     response.status = status;
     if (status === 'accepted') {
       requirement.status = 'in-progress';
+      // The order is going to this farmer — every other still-pending
+      // applicant is no longer in the running, so decline them too instead
+      // of leaving them stuck on "pending" indefinitely.
+      requirement.responses.forEach((r) => {
+        if (r._id.toString() !== response._id.toString() && r.status === 'pending') {
+          r.status = 'rejected';
+        }
+      });
     }
 
     await requirement.save();
@@ -341,6 +439,7 @@ export const updateRequirementStatus = async (req, res) => {
 export default {
   createBuyingRequirement,
   getBuyingRequirements,
+  getMyResponses,
   getMyRequirements,
   getBuyingRequirementById,
   addResponse,

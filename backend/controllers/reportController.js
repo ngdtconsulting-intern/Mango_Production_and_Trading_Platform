@@ -1,5 +1,25 @@
+import fs from 'fs';
 import Report from '../models/Report.js';
+import { uploadToCloudinary } from '../config/cloudinary.js';
 import logger from '../utils/logger.js';
+
+export const uploadReportImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const imageUrl = await uploadToCloudinary(req.file.path);
+
+    fs.unlink(req.file.path, (err) => {
+      if (err) logger.error(`Failed to delete temp upload file: ${err.message}`);
+    });
+
+    res.json({ success: true, imageUrl });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 export const createReport = async (req, res) => {
   try {
@@ -44,7 +64,9 @@ export const createReport = async (req, res) => {
 
 export const getMyReports = async (req, res) => {
   try {
-    const reports = await Report.find({ reporterId: req.user.id }).sort({ createdAt: -1 });
+    const reports = await Report.find({ reporterId: req.user.id })
+      .populate('resolvedBy', 'name')
+      .sort({ createdAt: -1 });
     res.json({ success: true, reports });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -61,10 +83,10 @@ export const getReports = async (req, res) => {
     const filter = {};
 
     if (req.user.role === 'surveyor') {
-      if (!req.user.address?.district) {
+      if (!req.user.coverageArea?.district) {
         return res.json({ success: true, total: 0, page: 1, pages: 0, reports: [] });
       }
-      filter.district = req.user.address.district;
+      filter.district = req.user.coverageArea.district;
     } else if (district) {
       filter.district = district;
     }
@@ -99,11 +121,11 @@ export const resolveReport = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Report not found' });
     }
 
-    // An officer can only resolve reports from their own district
-    if (report.district !== req.user.address?.district) {
+    // An officer can only resolve reports within their assigned coverage area
+    if (report.district !== req.user.coverageArea?.district) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to resolve reports outside your district',
+        message: 'Not authorized to resolve reports outside your coverage area',
       });
     }
 
@@ -122,4 +144,4 @@ export const resolveReport = async (req, res) => {
   }
 };
 
-export default { createReport, getMyReports, getReports, resolveReport };
+export default { createReport, getMyReports, getReports, resolveReport, uploadReportImage };

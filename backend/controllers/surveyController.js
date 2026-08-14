@@ -44,6 +44,7 @@ export const getSurveys = async (req, res) => {
     if (status) filter.status = status;
 
     const surveys = await Survey.find(filter)
+      .populate('farmerId', 'name email phone address')
       .skip(skip)
       .limit(parseInt(limit))
       .sort({ createdAt: -1 });

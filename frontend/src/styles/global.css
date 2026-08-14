@@ -17,13 +17,7 @@
 
   --color-info: #2c5f7c;
   --color-violet: #4b3f72;
-
-  --gradient-ripen: repeating-linear-gradient(
-    45deg,
-    var(--color-vermillion) 0 10px,
-    var(--color-gold) 10px 20px,
-    var(--color-orchard) 20px 30px
-  );
+  --color-mango-accent: #c1622c;
 
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'Public Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -34,6 +28,39 @@
   --radius-lg: 20px;
   --shadow-sm: 0 1px 3px rgba(42, 31, 20, 0.1);
   --shadow-md: 0 4px 18px rgba(42, 31, 20, 0.14);
+}
+
+/* ---------- Dark mode ----------
+   Every color in the app is read from these variables, so overriding
+   them here on [data-theme="dark"] re-themes the whole app without
+   touching component CSS. ThemeContext sets data-theme on <html>. */
+:root[data-theme='dark'] {
+  --color-orchard: #4a9a5f;
+  --color-orchard-dark: #3a7c4b;
+  --color-gold: #f0b73a;
+  --color-gold-dark: #d99a1f;
+  --color-vermillion: #e0554f;
+  --color-vermillion-dark: #c94742;
+
+  --color-bg: #171310;
+  --color-surface: #221c17;
+  --color-border: #3a3128;
+  --color-ink: #f3ece1;
+  --color-bark: #b7a98f;
+  --color-clay: #e2837c;
+
+  --color-info: #6fb3d8;
+  --color-violet: #a99ce0;
+  --color-mango-accent: #e2874f;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* smooth the transition when the toggle is flipped */
+body, .sidebar, .app-main, .card, .price-card, .stat-card, .requirement-item,
+.auth-card, .page-banner, input, select, textarea {
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
 body {
@@ -55,13 +82,13 @@ h1::after {
   height: 4px;
   margin-top: 10px;
   border-radius: 2px;
-  background: var(--gradient-ripen);
+  background: var(--color-mango-accent);
 }
 
 .ripen-bar {
   height: 4px;
   width: 100%;
-  background: var(--gradient-ripen);
+  background: var(--color-mango-accent);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 

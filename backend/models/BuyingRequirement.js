@@ -18,6 +18,7 @@ const buyingRequirementSchema = new mongoose.Schema(
       default: 'good',
     },
     location: {
+      province: String,
       district: String,
       municipality: String,
       ward: Number,

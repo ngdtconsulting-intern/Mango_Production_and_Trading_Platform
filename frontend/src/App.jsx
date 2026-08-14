@@ -1,20 +1,23 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getCurrentUser } from './store/authSlice';
-import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import { checkSurveyStatus } from './store/surveySlice';
+
 // Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Home from './pages/Home';
+
 // Farmer Pages
 import FarmerDashboard from './pages/farmer/Dashboard';
 import SurveyForm from './pages/farmer/SurveyForm';
 import MarketPrices from './pages/farmer/MarketPrices';
 import AddFarm from './pages/farmer/AddFarm';
 import ChatBox from './pages/community/ChatBox';
-
+import ReportProblem from './pages/community/ReportProblem';
+import MyRequests from './pages/farmer/MyRequests';
 
 // Trader Pages
 import TraderDashboard from './pages/trader/Dashboard';
@@ -24,8 +27,12 @@ import RequirementDetail from './pages/trader/RequirementDetail';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
+import CreateOfficer from './pages/admin/CreateOfficer';
 // Officer Pages
 import OfficerDashboard from './pages/officer/Dashboard';
+import PendingSurveys from './pages/officer/PendingSurveys';
+import OfficerReports from './pages/officer/Reports';
+import OfficerMarketPrices from './pages/officer/MarketPrices';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -47,21 +54,17 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/" replace />;
   }
 
-  // Farmers can navigate freely everywhere now — we only use hasSurvey to
-  // show a reminder banner on the dashboard (see FarmerDashboard.jsx),
-  // instead of blocking every other page until the survey is submitted.
-
   return (
-    <>
-      <Navbar />
-      {children}
-    </>
+    <div className="app-shell">
+      <Sidebar />
+      <main className="app-main">{children}</main>
+    </div>
   );
 };
+
+// Root route modified to ALWAYS return <Home />
 const RootRoute = () => {
-  const { user } = useSelector((state) => state.auth);
-  if (!user) return <Home />;
-  return <Navigate to={`/${user.role}/dashboard`} replace />;
+  return <Home />;
 };
 
 function App() {
@@ -115,13 +118,29 @@ function App() {
           }
         />
         <Route
-  path="/farmer/community"
-  element={
-    <ProtectedRoute requiredRole={['farmer']}>
-      <ChatBox />
-    </ProtectedRoute>
-  }
-/>
+          path="/farmer/community"
+          element={
+            <ProtectedRoute requiredRole={['farmer']}>
+              <ChatBox />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/farmer/report"
+          element={
+            <ProtectedRoute requiredRole={['farmer']}>
+              <ReportProblem />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/farmer/requests"
+          element={
+            <ProtectedRoute requiredRole={['farmer']}>
+              <MyRequests />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Trader Routes */}
         <Route
@@ -140,7 +159,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-<Route
+        <Route
           path="/trader/requirements/create"
           element={
             <ProtectedRoute requiredRole={['trader']}>
@@ -151,8 +170,16 @@ function App() {
         <Route
           path="/trader/requirements/:id"
           element={
-            <ProtectedRoute requiredRole={['trader']}>
+            <ProtectedRoute requiredRole={['trader', 'farmer']}>
               <RequirementDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/trader/report"
+          element={
+            <ProtectedRoute requiredRole={['trader']}>
+              <ReportProblem />
             </ProtectedRoute>
           }
         />
@@ -166,6 +193,30 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/officer/surveys"
+          element={
+            <ProtectedRoute requiredRole={['surveyor']}>
+              <PendingSurveys />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/officer/reports"
+          element={
+            <ProtectedRoute requiredRole={['surveyor']}>
+              <OfficerReports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/officer/market"
+          element={
+            <ProtectedRoute requiredRole={['surveyor']}>
+              <OfficerMarketPrices />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin Routes */}
         <Route
@@ -173,6 +224,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole={['admin']}>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/officers/new"
+          element={
+            <ProtectedRoute requiredRole={['admin']}>
+              <CreateOfficer />
             </ProtectedRoute>
           }
         />

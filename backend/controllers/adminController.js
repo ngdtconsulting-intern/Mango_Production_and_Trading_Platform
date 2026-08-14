@@ -11,9 +11,9 @@ export const getDashboardStats = async (req, res) => {
       totalUsers: await User.countDocuments({ active: true }),
       totalFarmers: await User.countDocuments({ role: 'farmer', active: true }),
       totalTraders: await User.countDocuments({ role: 'trader', active: true }),
+      totalSurveyors: await User.countDocuments({ role: 'surveyor', active: true }),
       totalSurveys: await Survey.countDocuments(),
       completedSurveys: await Survey.countDocuments({ status: 'verified' }),
-      totalBuyingRequirements: await BuyingRequirement.countDocuments({ status: 'open' }),
     };
 
     const recentSurveys = await Survey.find()
@@ -36,11 +36,14 @@ export const getDashboardStats = async (req, res) => {
 
 export const getUserManagement = async (req, res) => {
   try {
-    const { role, page = 1, limit = 20 } = req.query;
+    const { role, province, district, municipality, page = 1, limit = 20 } = req.query;
     const skip = (page - 1) * limit;
 
     const filter = {};
     if (role) filter.role = role;
+    if (province) filter['address.province'] = province;
+    if (district) filter['address.district'] = district;
+    if (municipality) filter['address.municipality'] = municipality;
 
     const users = await User.find(filter)
       .select('-password')
@@ -137,9 +140,16 @@ export const toggleUserStatus = async (req, res) => {
 };
 export const createStaffAccount = async (req, res) => {
   try {
-    const { name, email, phone, password, role, address } = req.body;
+    const { name, email, phone, password, role, address, coverageArea } = req.body;
 
     // role is already restricted to ['admin', 'surveyor'] by validateStaffCreation
+    if (role === 'surveyor' && !coverageArea?.district) {
+      return res.status(400).json({
+        success: false,
+        message: 'Coverage area (at least district) is required for officer accounts',
+      });
+    }
+
     let user = await User.findOne({ $or: [{ email }, { phone }] });
 
     if (user) {
@@ -156,6 +166,7 @@ export const createStaffAccount = async (req, res) => {
       password,
       role,
       address,
+      coverageArea: role === 'surveyor' ? coverageArea : undefined,
       verified: true,
     });
 
@@ -197,7 +208,7 @@ export const getAnalyticsReport = async (req, res) => {
     const priceStats = await MarketPrice.aggregate([
       {
         $group: {
-          _id: '$market',
+          _id: '$district',
           avgWholesale: { $avg: '$wholesalePricePerKg' },
           avgRetail: { $avg: '$retailPricePerKg' },
         },

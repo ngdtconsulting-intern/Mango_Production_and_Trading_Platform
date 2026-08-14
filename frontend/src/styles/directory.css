@@ -1,11 +1,10 @@
-.farmer-directory-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px 60px;
-}
+@import './trader-dashboard.css';
+
+/* Container width comes from .dashboard-container (dashboard.css). This file
+   only adds the Farmer Directory-specific pieces: filters and farmer cards. */
 
 /* ---------- Filters ---------- */
-.farmer-directory-container .filters-section {
+.filters-section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
@@ -17,24 +16,25 @@
   box-shadow: var(--shadow-sm);
 }
 
-.farmer-directory-container .filter-group { display: flex; flex-direction: column; }
-.farmer-directory-container .filter-group label { margin: 0 0 6px; }
-.farmer-directory-container .filter-group select,
-.farmer-directory-container .filter-group input {
+.filter-group { display: flex; flex-direction: column; }
+.filter-group label { margin: 0 0 6px; }
+.filter-group select,
+.filter-group input {
   padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 14px;
   background: var(--color-bg);
+  color: var(--color-ink);
 }
-.farmer-directory-container .filter-group select:focus,
-.farmer-directory-container .filter-group input:focus {
+.filter-group select:focus,
+.filter-group input:focus {
   border-color: var(--color-orchard);
   outline: none;
 }
 
-.farmer-directory-container .loading { color: var(--color-bark); font-style: italic; }
-.farmer-directory-container .empty-message {
+.loading { color: var(--color-bark); font-style: italic; }
+.empty-message {
   text-align: center;
   padding: 60px 20px;
   color: var(--color-bark);
@@ -69,10 +69,7 @@
   margin-bottom: 14px;
 }
 
-.farmer-header h3 {
-  margin: 0;
-  font-size: 17px;
-}
+.farmer-header h3 { margin: 0; font-size: 17px; }
 
 .farmer-header h3::before {
   content: '👨‍🌾';
@@ -95,39 +92,6 @@
 }
 .farmer-info strong { color: var(--color-ink); }
 
-.farmer-contacts {
-  display: flex;
-  gap: 10px;
-  margin: 16px 0;
-  flex-wrap: wrap;
-}
-
-.contact-btn {
-  flex: 1;
-  padding: 9px 10px;
-  border-radius: var(--radius-sm);
-  text-align: center;
-  text-decoration: none;
-  font-size: 12.5px;
-  font-weight: 600;
-  min-width: 100px;
-  transition: all 0.15s ease;
-}
-
-.contact-btn.phone {
-  border: 1px solid var(--color-orchard);
-  color: var(--color-orchard-dark);
-  background: #eaf5ee;
-}
-.contact-btn.phone:hover { background: var(--color-orchard); color: #fff; }
-
-.contact-btn.email {
-  border: 1px solid var(--color-gold);
-  color: var(--color-gold-dark);
-  background: #fdf6e6;
-}
-.contact-btn.email:hover { background: var(--color-gold); color: #2a1f14; }
-
 .btn-profile {
   width: 100%;
   padding: 11px;
@@ -145,5 +109,5 @@
 
 @media (max-width: 768px) {
   .farmers-grid { grid-template-columns: 1fr; }
-  .farmer-directory-container .filters-section { grid-template-columns: 1fr; }
+  .filters-section { grid-template-columns: 1fr; }
 }

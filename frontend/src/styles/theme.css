@@ -1,10 +1,11 @@
 :root {
-  
+
   --mango-primary: var(--color-gold);
   --mango-primary-dark: var(--color-gold-dark);
   --mango-green: var(--color-orchard);
   --mango-green-light: #4a8f5c;
   --mango-cream: var(--color-bg);
+  --mango-surface: var(--color-surface);
   --text-dark: var(--color-ink);
   --text-muted: var(--color-bark);
   --border: var(--color-border);
@@ -15,6 +16,97 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; font-family: var(--font-body); color: var(--text-dark); }
+
+/* Browsers give <button> its own default text color instead of inheriting
+   from the page, so any button that doesn't set color explicitly silently
+   falls back to near-black, invisible on a dark background. Buttons that
+   DO set their own color (.btn--primary, etc.) still win via specificity. */
+button { font-family: inherit; color: inherit; }
+
+/* ---------- NMMB brand lockup ---------- */
+.nmmb-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.nmmb-logo__bar {
+  flex-shrink: 0;
+  width: 3px;
+  height: 28px;
+  border-radius: 2px;
+  background: var(--color-mango-accent);
+}
+
+.nmmb-logo__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.nmmb-logo__top {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+}
+
+.nmmb-logo__accent { color: inherit; }
+
+.nmmb-logo__bottom {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--text-dark);
+}
+
+/* Collapsed / icon-only: just the accent mark, for cramped spaces like a
+   collapsed sidebar rail where even the compact lockup won't fit. */
+.nmmb-logo--mark .nmmb-logo__bar { height: 22px; }
+
+/* ---------- Large / hero variant ---------- */
+.nmmb-logo--lg {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.nmmb-logo--lg .nmmb-logo__bar {
+  width: 40px;
+  height: 4px;
+  margin-bottom: 16px;
+}
+
+.nmmb-logo--lg .nmmb-logo__top {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.nmmb-logo--lg .nmmb-logo__accent {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  line-height: 1.05;
+  color: var(--color-mango-accent);
+}
+
+.nmmb-logo--lg .nmmb-logo__bottom {
+  font-size: clamp(1.6rem, 3.4vw, 2.2rem);
+  line-height: 1.1;
+}
+
+/* ---------- Dark-ground modifier: fixed colors for photo/hero
+   backgrounds that are always dark, independent of the app's own
+   light/dark theme toggle (the theme-reactive default above already
+   handles surfaces that DO follow the toggle, like the sidebar). ---------- */
+.nmmb-logo--dark .nmmb-logo__top { color: rgba(255, 255, 255, 0.78); }
+.nmmb-logo--dark .nmmb-logo__accent { color: #e2874f; }
+.nmmb-logo--dark .nmmb-logo__bottom { color: #fff; }
+.nmmb-logo--dark .nmmb-logo__bar { background: #e2874f; }
 
 .text-gradient {
   background: linear-gradient(90deg, var(--mango-primary), var(--mango-green-light));
@@ -38,11 +130,11 @@ body { margin: 0; font-family: var(--font-body); color: var(--text-dark); }
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
-.btn--primary { background: var(--mango-primary); color: #fff; box-shadow: var(--shadow-sm); }
+.btn--primary { background: var(--mango-primary); color: #2a1f14; box-shadow: var(--shadow-sm); }
 .btn--primary:hover { background: var(--mango-primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn--ghost { background: transparent; color: var(--text-dark); border-color: var(--border); }
 .btn--ghost:hover { border-color: var(--mango-primary); color: var(--mango-primary-dark); }
-.btn--white { background: #fff; color: var(--mango-green); }
+.btn--white { background: var(--mango-surface); color: var(--mango-green); }
 .btn--white:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .btn--lg { padding: 14px 30px; font-size: 1.02rem; }
 .btn--block { width: 100%; }
@@ -55,13 +147,11 @@ body { margin: 0; font-family: var(--font-body); color: var(--text-dark); }
 
 /* ---------- Home: nav ---------- */
 .home__nav {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
   padding: 18px 6vw; position: sticky; top: 0; z-index: 20;
-  background: rgba(255, 253, 250, 0.85); backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--mango-surface) 85%, transparent); backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
-.navbar__brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.15rem; }
-.navbar__logo { font-size: 1.4rem; }
 .home__nav-actions { display: flex; gap: 12px; }
 
 /* ---------- Hero ---------- */
@@ -103,8 +193,16 @@ body { margin: 0; font-family: var(--font-body); color: var(--text-dark); }
 }
 .home__hero-actions { position: relative; z-index: 1; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
 .home__hero-badges {
-  position: relative; z-index: 1; display: flex; gap: 22px; justify-content: center;
-  flex-wrap: wrap; color: rgba(255,255,255,0.85); font-size: 0.9rem; font-weight: 500;
+  position: relative; z-index: 1; display: flex; gap: 12px; justify-content: center;
+  flex-wrap: wrap;
+}
+.home__hero-badges span {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 999px;
+  background: rgba(20, 40, 24, 0.55);
+  border: 1px solid rgba(255,255,255,0.35);
+  backdrop-filter: blur(6px);
+  color: #fff; font-size: 0.85rem; font-weight: 600;
 }
 
 /* ---------- Stats ---------- */
@@ -125,7 +223,7 @@ body { margin: 0; font-family: var(--font-body); color: var(--text-dark); }
 
 .home__features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
 .card {
-  background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--mango-surface); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 32px 26px; text-align: left; box-shadow: var(--shadow-sm);
 }
 .card--hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
@@ -161,7 +259,11 @@ body { margin: 0; font-family: var(--font-body); color: var(--text-dark); }
 .home__footer-copy { font-size: 0.85rem; margin-top: 10px; }
 
 /* ---------- Auth pages ---------- */
-.auth-page { min-height: 100vh; background: var(--mango-cream); }
+.auth-page { position: relative; min-height: 100vh; background: var(--mango-cream); }
+.auth-page__theme-toggle {
+  position: absolute; top: 20px; right: 20px; z-index: 30;
+  background: var(--mango-surface);
+}
 .auth-shell { display: grid; grid-template-columns: 0.85fr 1.15fr; min-height: 100vh; }
 
 .auth-side {
@@ -173,50 +275,100 @@ body { margin: 0; font-family: var(--font-body); color: var(--text-dark); }
   background-position: center;
   color: #fff; display: flex; flex-direction: column; justify-content: center;
 }
-.auth-side__brand { color: #fff; text-decoration: none; font-weight: 800; display: flex; align-items: center; gap: 8px; margin-bottom: 40px; font-size: 1.1rem; }
+.auth-side__brand { margin-bottom: 40px; }
 .auth-side__title { font-size: 1.8rem; line-height: 1.3; margin-bottom: 16px; }
 .auth-side__text { opacity: 0.9; line-height: 1.6; margin-bottom: 28px; }
-.auth-side__list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; font-weight: 500; }
+.auth-side__list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 12px; font-weight: 500; }
+.auth-side__list li { display: flex; align-items: center; gap: 10px; }
+.auth-side__list-icon {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(255,255,255,0.18); color: #fff; font-size: 0.72rem;
+}
 .auth-side__glow { position: absolute; width: 300px; height: 300px; border-radius: 50%; background: rgba(255,159,28,0.25); filter: blur(40px); bottom: -80px; right: -80px; }
 
 .auth-main { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
 .auth-card {
-  width: 100%; max-width: 620px; background: #fff; border-radius: var(--radius);
-  padding: 40px; box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+  position: relative; overflow: hidden;
+  width: 100%; max-width: 620px; background: var(--mango-surface); border-radius: var(--radius);
+  padding: 44px 40px 40px; box-shadow: var(--shadow-lg); border: 1px solid var(--border);
 }
-.auth-card__brand--mobile { display: none; font-weight: 800; margin-bottom: 12px; }
-.auth-card h1 { margin: 0 0 6px; font-size: 1.6rem; }
-.auth-card__subtitle { color: var(--text-muted); margin: 0 0 24px; }
+.auth-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: var(--color-mango-accent);
+}
+.auth-card--wide { max-width: 760px; }
+.auth-card__brand--mobile { display: none; margin-bottom: 12px; }
+.auth-card h1 { margin: 0 0 6px; font-size: 1.7rem; }
+.auth-card h1::after { display: none; }
+.auth-card__subtitle { color: var(--text-muted); margin: 0 0 26px; font-size: 0.95rem; }
 
 .status { padding: 12px 16px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 20px; }
-.status--error { background: #fdecea; color: #b3261e; border: 1px solid #f7c9c4; }
+.status--error {
+  background: color-mix(in srgb, var(--color-vermillion) 12%, var(--mango-surface));
+  color: var(--color-vermillion-dark);
+  border: 1px solid color-mix(in srgb, var(--color-vermillion) 35%, transparent);
+}
 .status--reminder {
   display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   background: #fff8ef; color: var(--text-dark); border: 1px solid #f3d9a8;
 }
 .status--reminder .btn-primary { padding: 8px 16px; white-space: nowrap; }
-.role-select { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 26px; }
-.role-card {
-  display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
-  border: 2px solid var(--border); border-radius: 12px; padding: 14px 8px; background: #fff;
-  cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
+
+.theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--mango-surface);
+  cursor: pointer; font-size: 1.05rem;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
-.role-card__icon { font-size: 1.4rem; }
+.theme-toggle:hover { transform: translateY(-1px); background: var(--mango-cream); }
+
+.role-select { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 26px; }
+.role-select--2 { grid-template-columns: repeat(2, 1fr); }
+.role-card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  border: 1.5px solid var(--border); border-radius: 14px; padding: 18px 10px; background: var(--mango-cream);
+  cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.role-card:hover { border-color: var(--mango-primary); transform: translateY(-2px); }
+.role-card__icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 12px; font-size: 1.15rem;
+  background: var(--mango-surface); color: var(--mango-green);
+  transition: background 0.15s ease, color 0.15s ease;
+}
 .role-card__label { font-weight: 700; font-size: 0.88rem; }
 .role-card__desc { font-size: 0.72rem; color: var(--text-muted); }
-.role-card--active { border-color: var(--mango-primary); background: #fff8ef; }
+.role-card--active {
+  border-color: var(--mango-primary); background: var(--mango-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mango-primary) 20%, transparent);
+}
+.role-card--active .role-card__icon { background: var(--mango-primary); color: #2a1f14; }
+.role-card--disabled { opacity: 0.45; cursor: not-allowed; }
+.role-card--disabled:hover { border-color: var(--border); transform: none; }
 
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; margin-bottom: 26px; }
 .field-grid--single { grid-template-columns: 1fr; }
 .field { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600; color: var(--text-dark); }
-.field input, .field select {
+.field input, .field select, .field textarea {
   padding: 11px 14px; border-radius: 10px; border: 1.5px solid var(--border);
   font-size: 0.95rem; font-weight: 400; transition: border-color 0.15s ease;
+  font-family: inherit;
 }
-.field input:focus, .field select:focus { outline: none; border-color: var(--mango-primary); }
+.field textarea { resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--mango-primary); }
 .field__password { position: relative; display: flex; }
 .field__password input { flex: 1; padding-right: 40px; }
 .field__password-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1rem; }
+
+.field__icon { position: relative; display: flex; }
+.field__icon input, .field__icon select { flex: 1; padding-left: 40px; }
+.field__icon-glyph {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: var(--text-muted); pointer-events: none; font-size: 1rem;
+}
 
 .auth-card__footer { text-align: center; margin-top: 20px; color: var(--text-muted); font-size: 0.9rem; }
 .auth-card__footer a { color: var(--mango-primary-dark); font-weight: 600; text-decoration: none; }
@@ -267,7 +419,7 @@ body { margin: 0; font-family: var(--font-body); color: var(--text-dark); }
 @media (max-width: 900px) {
   .auth-shell { grid-template-columns: 1fr; }
   .auth-side { display: none; }
-  .auth-card__brand--mobile { display: block; }
+  .auth-card__brand--mobile { display: inline-flex; }
   .field-grid { grid-template-columns: 1fr; }
   .role-select { grid-template-columns: repeat(2, 1fr); }
 }
