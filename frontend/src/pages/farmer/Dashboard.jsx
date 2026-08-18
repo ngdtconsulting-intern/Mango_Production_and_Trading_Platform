@@ -5,13 +5,15 @@ import { FiArrowRight, FiMapPin, FiClipboard } from 'react-icons/fi';
 import api from '../../services/api';
 import PageBanner from '../../components/PageBanner';
 import { checkSurveyStatus } from '../../store/surveySlice';
+import { calculateExpectedProduction, formatKg } from '../../utils/treeAgeYield';
 import '../../styles/dashboard.css';
+import '../../styles/census.css';
 
 export default function FarmerDashboard() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { hasSurvey } = useSelector((state) => state.survey);
+  const { hasCurrentYear, currentYearBS, years } = useSelector((state) => state.survey);
 
   const [farms, setFarms] = useState([]);
   const [marketPrices, setMarketPrices] = useState([]);
@@ -21,7 +23,7 @@ export default function FarmerDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-    if (hasSurvey === null) dispatch(checkSurveyStatus());
+    if (hasCurrentYear === null) dispatch(checkSurveyStatus());
   }, []);
 
   const fetchDashboardData = async () => {
@@ -53,12 +55,33 @@ export default function FarmerDashboard() {
         subtitle="Manage your orchards, submit production surveys, and respond to trader requirements."
       />
 
-      {hasSurvey === false && (
+      {hasCurrentYear === false && (
         <div className="status status--reminder">
-          <span><FiClipboard /> You haven't submitted a production survey yet. It helps traders find you.</span>
+          <span>
+            <FiClipboard />{' '}
+            {years?.length > 0
+              ? `Your ${currentYearBS} BS survey is due. Your last one was for ${years[0].year} BS.`
+              : `You haven't submitted a production survey yet. It helps traders find you.`}
+          </span>
           <button className="btn-primary" onClick={() => navigate('/farmer/survey')}>
-            Complete survey
+            {years?.length > 0 ? `File ${currentYearBS} survey` : 'Complete survey'}
           </button>
+        </div>
+      )}
+
+      {/* Census history — one row per year on file. */}
+      {years?.length > 0 && (
+        <div className="dashboard-section">
+          <div className="dashboard-section-head">
+            <h2>Your Census Records</h2>
+          </div>
+          <div className="tree-age-tags">
+            {years.map((y) => (
+              <span key={y.year} className={`census-year-chip census-year-chip--${y.status}`}>
+                {y.year} BS · {y.status}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -198,13 +221,45 @@ export default function FarmerDashboard() {
             {selectedFarm.treeAgeDistribution && Object.values(selectedFarm.treeAgeDistribution).some((v) => v > 0) && (
               <>
                 <h3 className="detail-heading">Tree Age Distribution</h3>
-                <div className="tree-age-tags">
-                  {Object.entries(selectedFarm.treeAgeDistribution)
-                    .filter(([, count]) => count > 0)
-                    .map(([range, count]) => (
-                      <span key={range} className="tree-age-tag">{range} yrs: {count}</span>
-                    ))}
-                </div>
+                {(() => {
+                  const expected = calculateExpectedProduction(selectedFarm.treeAgeDistribution);
+                  return (
+                    <>
+                      <table className="yield-table">
+                        <thead>
+                          <tr>
+                            <th>Age</th>
+                            <th>Trees</th>
+                            <th>Per tree</th>
+                            <th>Typical total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {expected.perBracket
+                            .filter((b) => b.trees > 0)
+                            .map((b) => (
+                              <tr key={b.key}>
+                                <td>{b.label}</td>
+                                <td>{b.trees}</td>
+                                <td>{b.kgPerTree === 0 ? '—' : `${b.kgPerTree} kg`}</td>
+                                <td>{b.expectedKg === 0 ? '—' : formatKg(b.expectedKg)}</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <td colSpan={3}>Expected annual production</td>
+                            <td>{formatKg(expected.expectedKg)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                      <p className="empty-message-small">
+                        Reference figures from standard mango production tables for trees of
+                        these ages. Actual harvest varies with weather, irrigation and care.
+                      </p>
+                    </>
+                  );
+                })()}
               </>
             )}
 

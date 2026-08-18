@@ -300,7 +300,12 @@ export default function AdminDashboard() {
                         </strong>
                         <StatusBadge status={survey.status} />
                       </div>
-                      <span>{survey.totalMangoTrees} trees • {survey.totalProductionKg} kg produced</span>
+                      <span>
+                        {survey.surveyYearBS} BS • {survey.totalMangoTrees} trees •{' '}
+                        {survey.totalProductionKg} kg produced
+                        {survey.expectedProductionKg > 0 &&
+                          ` (expected ${survey.expectedProductionKg} kg)`}
+                      </span>
                       <span>Satisfaction: {survey.satisfactionLevel}/10</span>
                       <span>Submitted: {new Date(survey.createdAt).toLocaleDateString()}</span>
                     </div>

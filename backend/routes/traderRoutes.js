@@ -5,7 +5,10 @@ import { protect, authorize } from '../middleware/auth.js';
 const router = express.Router();
 
 router.post('/requirements', protect, authorize('trader'), createBuyingRequirement);
-router.get('/requirements', getBuyingRequirements);
+// Listing carries the posting trader's contact phone and email, so it needs an
+// account. Left open to any signed-in role: farmers browse it to find work and
+// traders to see the market, which is the same audience the UI already allows.
+router.get('/requirements', protect, getBuyingRequirements);
 router.get('/requirements/my-requirements', protect, authorize('trader'), getMyRequirements);
 router.get('/requirements/my-responses', protect, authorize('farmer'), getMyResponses);
 router.get('/requirements/:id', protect, getBuyingRequirementById);

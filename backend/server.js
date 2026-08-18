@@ -20,6 +20,11 @@ const app = express();
 // Connect DB
 connectDB();
 
+// Rate limiting keys on req.ip. Behind a proxy (Render, Heroku, nginx, a load
+// balancer) every request would otherwise carry the proxy's address and one
+// attacker could lock out every user. Enable this when deploying behind one:
+// app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet());
 app.use(compression());

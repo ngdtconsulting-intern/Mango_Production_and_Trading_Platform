@@ -31,6 +31,7 @@ import CreateOfficer from './pages/admin/CreateOfficer';
 // Officer Pages
 import OfficerDashboard from './pages/officer/Dashboard';
 import PendingSurveys from './pages/officer/PendingSurveys';
+import OfficerCensus from './pages/officer/Census';
 import OfficerReports from './pages/officer/Reports';
 import OfficerMarketPrices from './pages/officer/MarketPrices';
 
@@ -38,13 +39,13 @@ import OfficerMarketPrices from './pages/officer/MarketPrices';
 const ProtectedRoute = ({ children, requiredRole }) => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { hasSurvey } = useSelector((state) => state.survey);
+  const { hasCurrentYear } = useSelector((state) => state.survey);
 
   useEffect(() => {
-    if (user?.role === 'farmer' && hasSurvey === null) {
+    if (user?.role === 'farmer' && hasCurrentYear === null) {
       dispatch(checkSurveyStatus());
     }
-  }, [user, hasSurvey, dispatch]);
+  }, [user, hasCurrentYear, dispatch]);
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -198,6 +199,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole={['surveyor']}>
               <PendingSurveys />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/officer/census"
+          element={
+            <ProtectedRoute requiredRole={['surveyor']}>
+              <OfficerCensus />
             </ProtectedRoute>
           }
         />

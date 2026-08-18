@@ -2,20 +2,50 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import PageBanner from '../../components/PageBanner';
+import {
+  calculateExpectedProduction,
+  calculateYieldGap,
+  censusYearOptions,
+  getCurrentBsYear,
+  YIELD_FLAGS,
+  YIELD_FLAG_LABELS,
+  formatKg,
+} from '../../utils/treeAgeYield';
 import '../../styles/dashboard.css';
+import '../../styles/directory.css';
+import '../../styles/census.css';
+
+/**
+ * Expected production is recomputed here from the survey's own tree ages so the
+ * officer sees the working, not just a stored number. It agrees with the
+ * `expectedProductionKg` the backend saved, because both read the same table.
+ */
+const reviewFigures = (survey) => {
+  const expected = calculateExpectedProduction(survey?.treeAgeDistribution);
+  const gap = calculateYieldGap(
+    expected.expectedKg,
+    survey?.totalProductionKg,
+    expected.totalTrees
+  );
+  return { expected, gap };
+};
 
 export default function PendingSurveys() {
   const [loading, setLoading] = useState(true);
   const [pendingSurveys, setPendingSurveys] = useState([]);
   const [reviewingSurvey, setReviewingSurvey] = useState(null);
+  const [year, setYear] = useState(getCurrentBsYear());
 
   useEffect(() => {
     fetchSurveys();
-  }, []);
+  }, [year]);
 
   const fetchSurveys = async () => {
+    setLoading(true);
     try {
-      const { data } = await api.get('/surveys', { params: { status: 'submitted', limit: 20 } });
+      const { data } = await api.get('/surveys', {
+        params: { status: 'submitted', year, limit: 100 },
+      });
       setPendingSurveys(data.surveys);
     } catch (error) {
       console.error('Error fetching pending surveys:', error);
@@ -53,12 +83,27 @@ export default function PendingSurveys() {
         subtitle="Review and verify production surveys submitted by farmers in your coverage area."
       />
 
+      <div className="filters-section">
+        <div className="filter-group">
+          <label>Census year</label>
+          <select value={year} onChange={(e) => setYear(Number(e.target.value))}>
+            {censusYearOptions().map((y) => (
+              <option key={y} value={y}>{y} BS</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <h2>Pending Surveys ({pendingSurveys.length})</h2>
-      {pendingSurveys.length === 0 ? (
-        <p>No surveys awaiting review.</p>
+      {loading ? (
+        <p className="loading">Loading surveys...</p>
+      ) : pendingSurveys.length === 0 ? (
+        <p>No surveys awaiting review for {year} BS.</p>
       ) : (
         <div className="admin-list">
-          {pendingSurveys.map((survey) => (
+          {pendingSurveys.map((survey) => {
+            const { gap } = reviewFigures(survey);
+            return (
             <div key={survey._id} className="admin-card">
               <div className="admin-card-info">
                 <strong>{survey.farmerId?.name || 'Unknown farmer'}</strong>
@@ -68,6 +113,12 @@ export default function PendingSurveys() {
                     : 'Location not recorded'}
                 </span>
                 <span>{survey.farmerId?.phone || 'N/A'}</span>
+                {/* Surface the cross-check in the list so an officer can triage
+                    without opening every record. */}
+                <span className={`yield-pill yield-pill--${gap.flag}`}>
+                  {YIELD_FLAG_LABELS[gap.flag]}
+                  {gap.gapPercent !== null && ` · ${gap.gapPercent > 0 ? '+' : ''}${gap.gapPercent}%`}
+                </span>
               </div>
               <div className="admin-card-actions">
                 <button className="btn-toggle" onClick={() => setReviewingSurvey(survey)}>
@@ -81,7 +132,8 @@ export default function PendingSurveys() {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -90,7 +142,9 @@ export default function PendingSurveys() {
         <div className="modal-overlay" onClick={closeReview}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{reviewingSurvey.farmerId?.name || 'Unknown farmer'}'s Survey</h2>
+              <h2>
+                {reviewingSurvey.farmerId?.name || 'Unknown farmer'} · {reviewingSurvey.surveyYearBS} BS
+              </h2>
               <button className="close-btn" onClick={closeReview}>×</button>
             </div>
 
@@ -130,22 +184,111 @@ export default function PendingSurveys() {
               <div><span className="detail-label">Production Cost</span><span>Rs. {reviewingSurvey.productionCostNPR || 'N/A'}</span></div>
             </div>
 
-            {reviewingSurvey.treeAgeDistribution?.length > 0 && (
-              <>
-                <h3 className="detail-heading">Tree Age Distribution</h3>
-                <div className="tree-age-tags">
-                  {reviewingSurvey.treeAgeDistribution.map((t, i) => (
-                    <span key={i} className="tree-age-tag">{t.ageRange}: {t.numberOfTrees}</span>
-                  ))}
-                </div>
-              </>
-            )}
+            {(() => {
+              const { expected, gap } = reviewFigures(reviewingSurvey);
+              const declared = reviewingSurvey.totalMangoTrees || 0;
+              const mismatch = expected.totalTrees > 0 && declared > 0 && expected.totalTrees !== declared;
 
-            <h3 className="detail-heading">Production & Earnings</h3>
+              return (
+                <>
+                  <h3 className="detail-heading">Tree Age Distribution &amp; Expected Production</h3>
+
+                  {expected.totalTrees === 0 ? (
+                    <p className="empty-message-small">
+                      No tree ages recorded — expected production cannot be checked for this survey.
+                    </p>
+                  ) : (
+                    <>
+                      <table className="yield-table">
+                        <thead>
+                          <tr>
+                            <th>Age bracket</th>
+                            <th>Trees</th>
+                            <th>Per tree</th>
+                            <th>Expected</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {expected.perBracket
+                            .filter((b) => b.trees > 0)
+                            .map((b) => (
+                              <tr key={b.key}>
+                                <td>{b.label}</td>
+                                <td>{b.trees}</td>
+                                <td>{b.kgPerTree === 0 ? '—' : `${b.kgPerTree} kg`}</td>
+                                <td>{b.expectedKg === 0 ? '—' : formatKg(b.expectedKg)}</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <td>Total</td>
+                            <td>{expected.totalTrees}</td>
+                            <td>{expected.bearingTrees} bearing</td>
+                            <td>{formatKg(expected.expectedKg)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+
+                      {mismatch && (
+                        <p className="expected-panel__warn">
+                          Age brackets total {expected.totalTrees} trees, but the survey declares{' '}
+                          {declared} total mango trees. Ask the farmer to reconcile.
+                        </p>
+                      )}
+
+                      {/* The cross-check the officer signs off on. */}
+                      <div className={`yield-check yield-check--${gap.flag}`}>
+                        <div className="yield-check__head">
+                          <span className="yield-check__dot" />
+                          <strong>{YIELD_FLAG_LABELS[gap.flag]}</strong>
+                        </div>
+                        <div className="yield-check__figures">
+                          <div>
+                            <span className="detail-label">Expected</span>
+                            <span>{formatKg(expected.expectedKg)}</span>
+                          </div>
+                          <div>
+                            <span className="detail-label">Reported</span>
+                            <span>{formatKg(reviewingSurvey.totalProductionKg)}</span>
+                          </div>
+                          <div>
+                            <span className="detail-label">Difference</span>
+                            <span>
+                              {gap.gapKg > 0 ? '+' : ''}{formatKg(gap.gapKg)}
+                              {gap.gapPercent !== null && ` (${gap.gapPercent > 0 ? '+' : ''}${gap.gapPercent}%)`}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="detail-label">Usual range</span>
+                            <span>{formatKg(expected.minKg)} – {formatKg(expected.maxKg)}</span>
+                          </div>
+                        </div>
+                        {gap.flag !== YIELD_FLAGS.OK && (
+                          <p className="yield-check__foot">
+                            A difference this size is not automatically wrong — hail, drought or a
+                            poor flowering year all produce it. Confirm the figure with the farmer
+                            before approving or rejecting.
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </>
+              );
+            })()}
+
+            <h3 className="detail-heading">Production &amp; Earnings</h3>
             <div className="detail-grid">
               <div><span className="detail-label">Total Production</span><span>{reviewingSurvey.totalProductionKg} kg</span></div>
-              <div><span className="detail-label">Earnings (2082)</span><span>Rs. {reviewingSurvey.totalEarnings2082}</span></div>
-              <div><span className="detail-label">Earnings (2081)</span><span>Rs. {reviewingSurvey.totalEarnings2081}</span></div>
+              <div>
+                <span className="detail-label">Earnings ({reviewingSurvey.surveyYearBS})</span>
+                <span>Rs. {reviewingSurvey.earningsCurrentYearNPR ?? reviewingSurvey.totalEarnings2082 ?? 0}</span>
+              </div>
+              <div>
+                <span className="detail-label">Earnings ({reviewingSurvey.surveyYearBS - 1})</span>
+                <span>Rs. {reviewingSurvey.earningsPreviousYearNPR ?? reviewingSurvey.totalEarnings2081 ?? 0}</span>
+              </div>
               <div><span className="detail-label">Growth</span><span>{reviewingSurvey.earningsGrowth ?? 'N/A'}%</span></div>
               <div><span className="detail-label">Satisfaction</span><span>{reviewingSurvey.satisfactionLevel}/10</span></div>
             </div>

@@ -24,7 +24,8 @@ export const generateAnalytics = async (req, res) => {
     }
 
     const filter = { createdAt: { $gte: startDate } };
-    if (district) filter['address.district'] = district;
+    // Survey stores district at the top level, not nested under `address`.
+    if (district) filter.district = district;
 
     const surveyData = await Survey.aggregate([
       { $match: filter },

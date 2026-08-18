@@ -1,4 +1,5 @@
 import { body, validationResult, query, param } from 'express-validator';
+import { TREE_AGE_KEYS } from './constants.js';
 
 export const validateSurveyData = [
   body('age').isInt({ min: 18, max: 100 }).withMessage('Age must be between 18 and 100'),
@@ -10,7 +11,21 @@ export const validateSurveyData = [
   body('orchardAreaKatha').isFloat({ min: 0.1 }).withMessage('Orchard area must be greater than 0'),
   body('totalMangoTrees').isInt({ min: 1 }).withMessage('Total trees must be at least 1'),
   body('totalProductionKg').optional().isFloat({ min: 0 }).withMessage('Production must be non-negative'),
+  body('earningsCurrentYearNPR').optional().isFloat({ min: 0 }).withMessage('Earnings must be non-negative'),
+  body('earningsPreviousYearNPR').optional().isFloat({ min: 0 }).withMessage('Earnings must be non-negative'),
+  // Legacy field names, still accepted from older clients.
   body('totalEarnings2082').optional().isFloat({ min: 0 }).withMessage('Earnings must be non-negative'),
+  body('totalEarnings2081').optional().isFloat({ min: 0 }).withMessage('Earnings must be non-negative'),
+  body('surveyYearBS').optional().isInt({ min: 2070, max: 2200 }).withMessage('Invalid census year'),
+  body('treeAgeDistribution').optional().isArray().withMessage('Tree age distribution must be a list'),
+  body('treeAgeDistribution.*.ageRange')
+    .optional()
+    .isIn(TREE_AGE_KEYS)
+    .withMessage(`Age range must be one of: ${TREE_AGE_KEYS.join(', ')}`),
+  body('treeAgeDistribution.*.numberOfTrees')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Tree count must be zero or more'),
   body('satisfactionLevel').isInt({ min: 0, max: 10 }).withMessage('Satisfaction must be 0-10'),
 ];
 

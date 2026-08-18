@@ -1,12 +1,22 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../services/api';
+import { getCurrentBsYear } from '../utils/treeAgeYield';
 
+/**
+ * The survey is an annual census, so "has this farmer filed?" is only ever
+ * meaningful for a given year. Asking whether they have *ever* filed would
+ * silence the reminder permanently after the first submission.
+ */
 export const checkSurveyStatus = createAsyncThunk(
   'survey/checkStatus',
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await api.get('/surveys', { params: { limit: 1 } });
-      return data.total > 0;
+      const { data } = await api.get('/surveys/my-years');
+      return {
+        currentYearBS: data.currentYearBS,
+        hasCurrentYear: data.hasCurrentYear,
+        years: data.years || [],
+      };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to check survey status');
     }
@@ -16,24 +26,32 @@ export const checkSurveyStatus = createAsyncThunk(
 const surveySlice = createSlice({
   name: 'survey',
   initialState: {
-    hasSurvey: null,
+    currentYearBS: getCurrentBsYear(),
+    hasCurrentYear: null,
+    years: [],
     checking: false,
   },
   reducers: {
     resetSurveyStatus: (state) => {
-      state.hasSurvey = null;
+      state.hasCurrentYear = null;
+      state.years = [];
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(checkSurveyStatus.pending, (state) => { state.checking = true; })
+      .addCase(checkSurveyStatus.pending, (state) => {
+        state.checking = true;
+      })
       .addCase(checkSurveyStatus.fulfilled, (state, action) => {
         state.checking = false;
-        state.hasSurvey = action.payload;
+        state.currentYearBS = action.payload.currentYearBS;
+        state.hasCurrentYear = action.payload.hasCurrentYear;
+        state.years = action.payload.years;
       })
       .addCase(checkSurveyStatus.rejected, (state) => {
         state.checking = false;
-        state.hasSurvey = true; // fail open — don't lock farmers out on a network error
+        // Fail open — a network error must not nag a farmer who already filed.
+        state.hasCurrentYear = true;
       });
   },
 });

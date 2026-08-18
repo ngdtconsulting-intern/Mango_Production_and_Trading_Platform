@@ -1,4 +1,12 @@
 import mongoose from 'mongoose';
+import {
+  calculateExpectedProduction,
+  calculateYieldGap,
+  getCurrentBsYear,
+  kathaToHectare,
+  kgToMetricTonnes,
+  MIN_CENSUS_YEAR_BS,
+} from '../utils/constants.js';
 
 const treeAgeSchema = new mongoose.Schema({
   ageRange: String,
@@ -12,6 +20,17 @@ const surveySchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+
+    // Census year (Bikram Sambat). One survey per farmer per year — this is
+    // what makes the survey an annual census rather than a one-off form.
+    surveyYearBS: {
+      type: Number,
+      required: true,
+      min: MIN_CENSUS_YEAR_BS,
+      default: () => getCurrentBsYear(),
+      index: true,
+    },
+
     age: { type: Number, required: true, min: 18, max: 100 },
     educationLevel: { type: String, required: true },
 
@@ -31,6 +50,17 @@ const surveySchema = new mongoose.Schema(
     // Tree Age Distribution
     treeAgeDistribution: [treeAgeSchema],
 
+    // Derived from treeAgeDistribution via the TREE_AGE_BRACKETS table.
+    // Stored rather than computed on read so each census year keeps the
+    // figures it was verified against, even if the table is revised later.
+    bearingTreeCount: { type: Number, default: 0 },
+    expectedProductionKg: { type: Number, default: 0 },
+    expectedProductionMinKg: { type: Number, default: 0 },
+    expectedProductionMaxKg: { type: Number, default: 0 },
+    yieldGapKg: { type: Number, default: 0 },
+    yieldGapPercent: Number,
+    yieldFlag: String,
+
     // Management
     selfManaged: Boolean,
     managementType: String,
@@ -39,8 +69,17 @@ const surveySchema = new mongoose.Schema(
     // Production Data
     totalProductionKg: { type: Number, default: 0 },
     totalProductionMT: { type: Number, default: 0 },
+
+    // Earnings, keyed relative to the census year rather than to hard-coded
+    // BS years, so next year's census needs no schema change.
+    earningsCurrentYearNPR: { type: Number, default: 0 },
+    earningsPreviousYearNPR: { type: Number, default: 0 },
+
+    // Legacy fields kept in sync by the pre-save hook so surveys recorded
+    // before the census rework keep rendering. Prefer the fields above.
     totalEarnings2082: { type: Number, default: 0 },
     totalEarnings2081: { type: Number, default: 0 },
+
     earningsGrowth: Number,
 
     // Satisfaction
@@ -73,16 +112,62 @@ const surveySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Calculate hectare from katha - NO next() needed with async
-surveySchema.pre('save', async function () {
-  this.orchardAreaHectare = parseFloat((this.orchardAreaKatha * 0.0338).toFixed(4));
-  this.totalProductionMT = parseFloat((this.totalProductionKg * 0.001).toFixed(4));
+// One census record per farmer per year.
+surveySchema.index({ farmerId: 1, surveyYearBS: 1 }, { unique: true });
 
-  if (this.totalEarnings2081 && this.totalEarnings2082 && this.totalEarnings2081 > 0) {
-    this.earningsGrowth = parseFloat(
-      (((this.totalEarnings2082 - this.totalEarnings2081) / this.totalEarnings2081) * 100).toFixed(2)
-    );
+// District roll-ups for a given year are the officer's most common query.
+surveySchema.index({ surveyYearBS: 1, district: 1, status: 1 });
+
+/**
+ * Recompute every derived field from the raw answers. Kept in one place so
+ * create and update produce identical results.
+ */
+surveySchema.methods.recalculateDerivedFields = function () {
+  this.orchardAreaHectare = kathaToHectare(this.orchardAreaKatha);
+  this.totalProductionMT = kgToMetricTonnes(this.totalProductionKg);
+
+  // Bridge legacy and generic earnings fields in whichever direction has data.
+  if (!this.earningsCurrentYearNPR && this.totalEarnings2082) {
+    this.earningsCurrentYearNPR = this.totalEarnings2082;
   }
+  if (!this.earningsPreviousYearNPR && this.totalEarnings2081) {
+    this.earningsPreviousYearNPR = this.totalEarnings2081;
+  }
+  this.totalEarnings2082 = this.earningsCurrentYearNPR || 0;
+  this.totalEarnings2081 = this.earningsPreviousYearNPR || 0;
+
+  if (this.earningsPreviousYearNPR > 0) {
+    this.earningsGrowth = parseFloat(
+      (
+        ((this.earningsCurrentYearNPR - this.earningsPreviousYearNPR) /
+          this.earningsPreviousYearNPR) *
+        100
+      ).toFixed(2)
+    );
+  } else {
+    this.earningsGrowth = undefined;
+  }
+
+  // Expected production from the tree-age table, and the gap against what
+  // the farmer actually reported.
+  const expected = calculateExpectedProduction(this.treeAgeDistribution);
+  this.bearingTreeCount = expected.bearingTrees;
+  this.expectedProductionKg = expected.expectedKg;
+  this.expectedProductionMinKg = expected.minKg;
+  this.expectedProductionMaxKg = expected.maxKg;
+
+  const gap = calculateYieldGap(
+    expected.expectedKg,
+    this.totalProductionKg,
+    expected.totalTrees
+  );
+  this.yieldGapKg = gap.gapKg;
+  this.yieldGapPercent = gap.gapPercent ?? undefined;
+  this.yieldFlag = gap.flag;
+};
+
+surveySchema.pre('save', async function () {
+  this.recalculateDerivedFields();
 });
 
 export default mongoose.model('Survey', surveySchema);

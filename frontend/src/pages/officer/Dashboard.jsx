@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { FiClipboard, FiSun, FiPackage, FiFlag } from 'react-icons/fi';
+import { FiClipboard, FiSun, FiPackage, FiFlag, FiBookOpen } from 'react-icons/fi';
 import api from '../../services/api';
 import PageBanner from '../../components/PageBanner';
 import StatusBadge from '../../components/StatusBadge';
 import { getProvinces, getDistricts, getMunicipalities } from '../../utils/nepalLocations';
+import { getCurrentBsYear } from '../../utils/treeAgeYield';
 import '../../styles/dashboard.css';
 import '../../styles/directory.css';
+import '../../styles/census.css';
 
 export default function OfficerDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const currentYearBS = getCurrentBsYear();
 
   const [pendingCount, setPendingCount] = useState(0);
   const [openReportCount, setOpenReportCount] = useState(0);
@@ -127,6 +130,16 @@ export default function OfficerDashboard() {
           <p className="stat-label">Open Reports</p>
           <p className="stat-value">{openReportCount}</p>
         </div>
+      </div>
+
+      <div className="status status--reminder">
+        <span>
+          <FiBookOpen /> The {currentYearBS} BS mango census register is open — review totals
+          by municipality and export the year&apos;s records for the district office.
+        </span>
+        <button className="btn-primary" onClick={() => navigate('/officer/census')}>
+          Open census
+        </button>
       </div>
 
       <h2>Farmer &amp; Trader Profiles</h2>
@@ -273,7 +286,12 @@ export default function OfficerDashboard() {
                         </strong>
                         <StatusBadge status={survey.status} />
                       </div>
-                      <span>{survey.totalMangoTrees} trees • {survey.totalProductionKg} kg produced</span>
+                      <span>
+                        {survey.surveyYearBS} BS • {survey.totalMangoTrees} trees •{' '}
+                        {survey.totalProductionKg} kg produced
+                        {survey.expectedProductionKg > 0 &&
+                          ` (expected ${survey.expectedProductionKg} kg)`}
+                      </span>
                       <span>Satisfaction: {survey.satisfactionLevel}/10</span>
                       <span>Submitted: {new Date(survey.createdAt).toLocaleDateString()}</span>
                     </div>

@@ -2,7 +2,7 @@ import Survey from '../models/Survey.js';
 import Farm from '../models/Farm.js';
 import MarketPrice from '../models/MarketPrice.js';
 import logger from '../utils/logger.js';
-import { TREE_AGE_BRACKETS } from '../utils/constants.js';
+import { calculateExpectedProduction } from '../utils/constants.js';
 
 export const calculateYieldForecast = async (farmId) => {
   try {
@@ -11,37 +11,36 @@ export const calculateYieldForecast = async (farmId) => {
       throw new Error('Farm not found');
     }
 
-    // Base yield calculation from tree age distribution
-    let totalProductionPotential = 0;
+    // Baseline straight from the tree-age table.
+    const expected = calculateExpectedProduction(farm.treeAgeDistribution);
 
-    TREE_AGE_BRACKETS.forEach((bracket) => {
-      const treeCount = farm.treeAgeDistribution[bracket.label.split(' ')[0]] || 0;
-      const yieldPerTree = 40; // kg per tree average
-      const productivity = bracket.productivityPercent / 100;
-      totalProductionPotential += treeCount * yieldPerTree * productivity;
+    // Adjust for what the farmer's most recent census record says about how
+    // the orchard is run. The farm's owner is the link — Survey has no farmId.
+    let managementMultiplier = 1;
+    const recentSurvey = await Survey.findOne({ farmerId: farm.userId }).sort({
+      surveyYearBS: -1,
+      createdAt: -1,
     });
 
-    // Apply management multiplier
-    let managementMultiplier = 1;
-    const recentSurvey = Survey.findOne({ farmId }).sort({ createdAt: -1 });
-
     if (recentSurvey) {
-      // Good management practices increase yield
-      if (recentSurvey.selfManaged) managementMultiplier = 1.1;
-      // Pest/disease reduces yield
+      if (recentSurvey.selfManaged) managementMultiplier *= 1.1;
       if (recentSurvey.productionChallenges) managementMultiplier *= 0.9;
     }
 
-    const adjustedForecast = totalProductionPotential * managementMultiplier;
+    const adjustedForecast = expected.expectedKg * managementMultiplier;
 
     logger.info(`Yield forecast calculated for farm ${farmId}: ${adjustedForecast} kg`);
 
     return {
       farmId,
       farmName: farm.farmName,
-      baselineProduction: totalProductionPotential,
+      baselineProduction: expected.expectedKg,
+      plausibleRangeKg: { min: expected.minKg, max: expected.maxKg },
+      totalTrees: expected.totalTrees,
+      bearingTrees: expected.bearingTrees,
+      perBracket: expected.perBracket,
       adjustedForecast: Math.round(adjustedForecast),
-      confidenceLevel: 85, // percentage
+      basedOnSurveyYearBS: recentSurvey?.surveyYearBS ?? null,
       factors: {
         treeAge: 'High impact',
         management: 'Moderate impact',
@@ -55,9 +54,12 @@ export const calculateYieldForecast = async (farmId) => {
   }
 };
 
-export const forecastDistrictProduction = async (district) => {
+export const forecastDistrictProduction = async (district, year = null) => {
   try {
-    const surveys = await Survey.find({ 'address.district': district });
+    const filter = { district };
+    if (year) filter.surveyYearBS = Number(year);
+
+    const surveys = await Survey.find(filter);
 
     if (surveys.length === 0) {
       throw new Error('No surveys found for this district');
@@ -68,18 +70,14 @@ export const forecastDistrictProduction = async (district) => {
     let farmCount = surveys.length;
 
     surveys.forEach((survey) => {
-      // Calculate potential based on tree age distribution
-      let potential = 0;
-      survey.treeAgeDistribution.forEach((tree) => {
-        const bracket = TREE_AGE_BRACKETS.find((b) => b.label === tree.ageRange);
-        if (bracket) {
-          potential += tree.numberOfTrees * 40 * (bracket.productivityPercent / 100);
-        }
-      });
-
-      totalForecast += potential;
-      totalActual += survey.totalProductionKg;
+      // expectedProductionKg is derived from the tree-age table at save time.
+      totalForecast += survey.expectedProductionKg || 0;
+      totalActual += survey.totalProductionKg || 0;
     });
+
+    if (totalForecast === 0) {
+      throw new Error('No tree age data recorded for this district — expected production cannot be calculated');
+    }
 
     const yieldGap = totalForecast - totalActual;
     const yieldGapPercentage = (yieldGap / totalForecast) * 100;
@@ -217,7 +215,7 @@ export const forecastRevenue = async (farmId, expectedYieldKg, varietyMix) => {
   }
 };
 
-export const identifyopportunities = async (district) => {
+export const identifyOpportunities = async (district) => {
   try {
     // Get market demand
     const demandData = await MarketPrice.aggregate([
@@ -233,7 +231,7 @@ export const identifyopportunities = async (district) => {
 
     // Get supply from surveys
     const supplyData = await Survey.aggregate([
-      { $match: { 'address.district': district } },
+      { $match: { district } },
       {
         $group: {
           _id: null,

@@ -4,13 +4,15 @@ import MarketPrice from '../models/MarketPrice.js';
 import BuyingRequirement from '../models/BuyingRequirement.js';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
+import { TREE_AGE_BRACKETS } from '../utils/constants.js';
 
 export const calculateProductionStats = async (district = null, startDate = null, endDate = null) => {
   try {
     const filter = {};
 
+    // Survey stores district at the top level, not nested under `address`.
     if (district) {
-      filter['address.district'] = district;
+      filter.district = district;
     }
 
     if (startDate || endDate) {
@@ -23,12 +25,12 @@ export const calculateProductionStats = async (district = null, startDate = null
       { $match: filter },
       {
         $group: {
-          _id: '$address.district',
+          _id: '$district',
           totalSurveys: { $sum: 1 },
           totalProduction: { $sum: '$totalProductionKg' },
-          totalEarnings: { $sum: '$totalEarnings2082' },
+          totalEarnings: { $sum: '$earningsCurrentYearNPR' },
           averageProduction: { $avg: '$totalProductionKg' },
-          averageEarnings: { $avg: '$totalEarnings2082' },
+          averageEarnings: { $avg: '$earningsCurrentYearNPR' },
           averageSatisfaction: { $avg: '$satisfactionLevel' },
           totalFarmers: { $addToSet: '$farmerId' },
         },
@@ -110,71 +112,53 @@ export const calculateMarketStats = async (market = null, variety = null, days =
   }
 };
 
-export const calculateYieldGap = async (district = null) => {
+/**
+ * District yield gap: what the recorded tree ages imply the orchards should
+ * produce, against what farmers reported.
+ *
+ * Expected production is read from the stored `expectedProductionKg`, which the
+ * Survey pre-save hook derives from TREE_AGE_BRACKETS. That keeps the figure
+ * identical to the one the officer saw when verifying the record, instead of
+ * re-deriving it here with a second, drifting copy of the table.
+ */
+export const calculateYieldGap = async (district = null, year = null) => {
   try {
     const filter = {};
-    if (district) filter['location.district'] = district;
+    if (district) filter.district = district;
+    if (year) filter.surveyYearBS = Number(year);
 
-    // Get actual yields
-    const actualYields = await Survey.aggregate([
+    const rows = await Survey.aggregate([
       { $match: filter },
-      {
-        $group: {
-          _id: '$address.district',
-          actualProduction: { $sum: '$totalProductionKg' },
-          totalTrees: { $sum: '$totalMangoTrees' },
-          farmCount: { $sum: 1 },
-        },
-      },
-    ]);
-
-    // Get potential yields based on tree age distribution
-    const potentialYields = await Survey.aggregate([
-      { $match: filter },
-      {
-        $project: {
-          district: '$address.district',
-          potentialYield: {
-            $add: [
-              { $multiply: ['$treeAgeDistribution.0.numberOfTrees', 0] }, // 1-3 years: 0%
-              { $multiply: ['$treeAgeDistribution.1.numberOfTrees', 10] }, // 4-5 years: 10%
-              { $multiply: ['$treeAgeDistribution.2.numberOfTrees', 35] }, // 6-10 years: 35%
-              { $multiply: ['$treeAgeDistribution.3.numberOfTrees', 60] }, // 11-15 years: 60%
-              { $multiply: ['$treeAgeDistribution.4.numberOfTrees', 80] }, // 16-25 years: 80%
-              { $multiply: ['$treeAgeDistribution.5.numberOfTrees', 70] }, // 26-40 years: 70%
-              { $multiply: ['$treeAgeDistribution.6.numberOfTrees', 50] }, // 40+ years: 50%
-            ],
-          },
-        },
-      },
       {
         $group: {
           _id: '$district',
-          potentialProduction: { $sum: '$potentialYield' },
+          actualProduction: { $sum: '$totalProductionKg' },
+          potentialProduction: { $sum: '$expectedProductionKg' },
+          totalTrees: { $sum: '$totalMangoTrees' },
+          bearingTrees: { $sum: '$bearingTreeCount' },
+          farmCount: { $sum: 1 },
         },
       },
+      { $sort: { actualProduction: -1 } },
     ]);
 
-    // Calculate gap
-    const yieldGap = actualYields.map((actual) => {
-      const potential = potentialYields.find((p) => p._id === actual._id);
-      const gap = potential
-        ? ((potential.potentialProduction - actual.actualProduction) /
-            potential.potentialProduction) *
-          100
-        : 0;
+    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
-      return {
-        district: actual._id,
-        actualProduction: { $round: [actual.actualProduction, 2] },
-        potentialProduction: potential
-          ? { $round: [potential.potentialProduction, 2] }
-          : 0,
-        yieldGap: Math.round(gap * 100) / 100,
-        farmCount: actual.farmCount,
-        avgYieldPerFarm: Math.round((actual.actualProduction / actual.farmCount) * 100) / 100,
-      };
-    });
+    const yieldGap = rows.map((row) => ({
+      district: row._id,
+      actualProduction: round2(row.actualProduction),
+      potentialProduction: round2(row.potentialProduction),
+      totalTrees: row.totalTrees,
+      bearingTrees: row.bearingTrees,
+      // Positive = producing below what the tree ages suggest.
+      yieldGap: row.potentialProduction
+        ? round2(
+            ((row.potentialProduction - row.actualProduction) / row.potentialProduction) * 100
+          )
+        : null,
+      farmCount: row.farmCount,
+      avgYieldPerFarm: row.farmCount ? round2(row.actualProduction / row.farmCount) : 0,
+    }));
 
     logger.info(`Yield gap calculated for ${yieldGap.length} districts`);
     return yieldGap;
@@ -184,31 +168,48 @@ export const calculateYieldGap = async (district = null) => {
   }
 };
 
-export const calculateVarietyDistribution = async () => {
+/**
+ * How the district's trees are spread across age brackets, and what each
+ * bracket is expected to contribute. This is the age profile of the orchard
+ * stock — it says nothing about variety, which surveys do not yet collect.
+ */
+export const calculateTreeAgeProfile = async (district = null, year = null) => {
   try {
-    const distribution = await Survey.aggregate([
-      {
-        $unwind: '$treeAgeDistribution',
-      },
+    const filter = {};
+    if (district) filter.district = district;
+    if (year) filter.surveyYearBS = Number(year);
+
+    const rows = await Survey.aggregate([
+      { $match: filter },
+      { $unwind: '$treeAgeDistribution' },
       {
         $group: {
-          _id: {
-            ageRange: '$treeAgeDistribution.ageRange',
-            variety: '$treeAgeDistribution.ageRange', // This would need to be updated based on actual variety data
-          },
+          _id: '$treeAgeDistribution.ageRange',
           totalTrees: { $sum: '$treeAgeDistribution.numberOfTrees' },
           farmCount: { $sum: 1 },
         },
       },
-      {
-        $sort: { totalTrees: -1 },
-      },
     ]);
 
-    logger.info(`Variety distribution calculated`);
-    return distribution;
+    // Emit every bracket in canonical order, including ones with no trees, so
+    // the caller gets a complete profile rather than a sparse one.
+    const profile = TREE_AGE_BRACKETS.map((bracket) => {
+      const row = rows.find((r) => r._id === bracket.key);
+      const totalTrees = row?.totalTrees || 0;
+      return {
+        ageRange: bracket.key,
+        label: bracket.label,
+        kgPerTree: bracket.kgPerTree,
+        totalTrees,
+        farmCount: row?.farmCount || 0,
+        expectedProductionKg: totalTrees * bracket.kgPerTree,
+      };
+    });
+
+    logger.info(`Tree age profile calculated`);
+    return profile;
   } catch (error) {
-    logger.error(`Error calculating variety distribution: ${error.message}`);
+    logger.error(`Error calculating tree age profile: ${error.message}`);
     throw error;
   }
 };
@@ -232,7 +233,7 @@ export const generateMonthlyReport = async (month, year) => {
           _id: null,
           totalSurveys: { $sum: 1 },
           totalProduction: { $sum: '$totalProductionKg' },
-          totalEarnings: { $sum: '$totalEarnings2082' },
+          totalEarnings: { $sum: '$earningsCurrentYearNPR' },
           avgSatisfaction: { $avg: '$satisfactionLevel' },
         },
       },
@@ -284,7 +285,7 @@ export const generateMonthlyReport = async (month, year) => {
 export const getChallengesAnalysis = async (district = null) => {
   try {
     const filter = {};
-    if (district) filter['address.district'] = district;
+    if (district) filter.district = district;
 
     const challenges = await Survey.aggregate([
       { $match: filter },
@@ -353,7 +354,7 @@ export default {
   calculateProductionStats,
   calculateMarketStats,
   calculateYieldGap,
-  calculateVarietyDistribution,
+  calculateTreeAgeProfile,
   generateMonthlyReport,
   getChallengesAnalysis,
   getUserEngagementStats,

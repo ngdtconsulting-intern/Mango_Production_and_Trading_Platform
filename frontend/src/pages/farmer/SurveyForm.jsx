@@ -1,19 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import '../../styles/forms.css';
-import { useDispatch } from 'react-redux';
+import '../../styles/census.css';
+import { useDispatch, useSelector } from 'react-redux';
 import { checkSurveyStatus } from '../../store/surveySlice';
 import { getProvinces, getDistricts, getMunicipalities } from '../../utils/nepalLocations';
+import {
+  TREE_AGE_BRACKETS,
+  calculateExpectedProduction,
+  calculateYieldGap,
+  getCurrentBsYear,
+  YIELD_FLAGS,
+  formatKg,
+} from '../../utils/treeAgeYield';
 
 const EDUCATION_LEVELS = ['None', 'Primary', 'Secondary', 'Higher Secondary', 'Bachelor', 'Master or above'];
-const TREE_AGE_RANGES = ['1-3', '4-5', '6-10', '11-15', '16-25', '26-40', '40+'];
+const TREE_AGE_RANGES = TREE_AGE_BRACKETS.map((b) => b.key);
 
 export default function SurveyForm() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { currentYearBS, years } = useSelector((state) => state.survey);
   const [submitting, setSubmitting] = useState(false);
+
+  const censusYear = currentYearBS || getCurrentBsYear();
+  const previousYear = censusYear - 1;
 
   const [formData, setFormData] = useState({
     // Personal
@@ -39,8 +52,8 @@ municipality: '',
 
     // Production
     totalProductionKg: '',
-    totalEarnings2082: '',
-    totalEarnings2081: '',
+    earningsCurrentYearNPR: '',
+    earningsPreviousYearNPR: '',
 
     // Satisfaction
     satisfactionLevel: 5,
@@ -78,6 +91,24 @@ municipality: '',
     setTreeAges({ ...treeAges, [range]: value });
   };
 
+  // Live expected production from the tree ages entered so far. Recomputed
+  // locally so the farmer sees it update as they type; the authoritative
+  // figure is recalculated server-side on save.
+  const expected = useMemo(() => calculateExpectedProduction(treeAges), [treeAges]);
+
+  const reportedKg = Number(formData.totalProductionKg) || 0;
+  const gap = useMemo(
+    () => calculateYieldGap(expected.expectedKg, reportedKg, expected.totalTrees),
+    [expected.expectedKg, reportedKg, expected.totalTrees]
+  );
+
+  // The tree-age boxes should add up to the total the farmer already gave.
+  const declaredTrees = Number(formData.totalMangoTrees) || 0;
+  const treeCountMismatch =
+    declaredTrees > 0 && expected.totalTrees > 0 && expected.totalTrees !== declaredTrees;
+
+  const showYieldCheck = expected.totalTrees > 0 && reportedKg > 0;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -89,18 +120,19 @@ municipality: '',
     try {
       await api.post('/surveys', {
         ...formData,
+        surveyYearBS: censusYear,
         age: Number(formData.age),
         householdMembers: Number(formData.householdMembers),
         orchardAreaKatha: Number(formData.orchardAreaKatha),
         totalMangoTrees: Number(formData.totalMangoTrees),
         productionCostNPR: formData.productionCostNPR ? Number(formData.productionCostNPR) : undefined,
         totalProductionKg: formData.totalProductionKg ? Number(formData.totalProductionKg) : 0,
-        totalEarnings2082: formData.totalEarnings2082 ? Number(formData.totalEarnings2082) : 0,
-        totalEarnings2081: formData.totalEarnings2081 ? Number(formData.totalEarnings2081) : 0,
+        earningsCurrentYearNPR: formData.earningsCurrentYearNPR ? Number(formData.earningsCurrentYearNPR) : 0,
+        earningsPreviousYearNPR: formData.earningsPreviousYearNPR ? Number(formData.earningsPreviousYearNPR) : 0,
         satisfactionLevel: Number(formData.satisfactionLevel),
         treeAgeDistribution,
       });
-      toast.success('Survey submitted successfully');
+      toast.success(`Survey for ${censusYear} BS submitted successfully`);
       dispatch(checkSurveyStatus());
       navigate('/farmer/dashboard');
     } catch (error) {
@@ -113,6 +145,21 @@ municipality: '',
   return (
     <div className="form-container">
       <h1>Farm Survey</h1>
+
+      <div className="census-year-banner">
+        <div>
+          <span className="census-year-banner__label">Census year</span>
+          <strong className="census-year-banner__year">{censusYear} BS</strong>
+        </div>
+        <p className="census-year-banner__note">
+          This survey is recorded against {censusYear} BS. You file one survey per year —
+          last year&apos;s record stays on file for comparison.
+          {years?.length > 0 && (
+            <> You have already filed for: {years.map((y) => y.year).join(', ')}.</>
+          )}
+        </p>
+      </div>
+
       <form onSubmit={handleSubmit}>
 
         <h3 className="form-section">Your Details</h3>
@@ -196,20 +243,62 @@ municipality: '',
           </div>
         </div>
 
-        <h3 className="form-section">Tree Age Distribution (optional)</h3>
+        <h3 className="form-section">Tree Age Distribution</h3>
+        <p className="form-hint">
+          How many of your trees fall in each age group? The typical production for that
+          age is shown under each box, so you can check your harvest figure below.
+        </p>
         <div className="tree-age-grid">
-          {TREE_AGE_RANGES.map((range) => (
-            <div key={range}>
-              <label>{range} yrs</label>
+          {TREE_AGE_BRACKETS.map((bracket) => (
+            <div key={bracket.key}>
+              <label>{bracket.key} yrs</label>
               <input
                 type="number"
                 min="0"
-                value={treeAges[range]}
-                onChange={(e) => handleTreeAgeChange(range, e.target.value)}
+                value={treeAges[bracket.key]}
+                onChange={(e) => handleTreeAgeChange(bracket.key, e.target.value)}
               />
+              <span className="tree-age-hint">
+                {bracket.kgPerTree === 0 ? 'not bearing' : `~${bracket.kgPerTree} kg/tree`}
+              </span>
             </div>
           ))}
         </div>
+
+        {expected.totalTrees > 0 && (
+          <div className="expected-panel">
+            <div className="expected-panel__row">
+              <span>Trees entered</span>
+              <strong>
+                {expected.totalTrees.toLocaleString('en-IN')}
+                {expected.bearingTrees !== expected.totalTrees && (
+                  <span className="expected-panel__sub"> ({expected.bearingTrees} bearing)</span>
+                )}
+              </strong>
+            </div>
+            <div className="expected-panel__row">
+              <span>Typical production for these trees</span>
+              <strong>{formatKg(expected.expectedKg)}</strong>
+            </div>
+            {expected.maxKg > expected.minKg && (
+              <div className="expected-panel__row expected-panel__row--muted">
+                <span>Usual range</span>
+                <strong>{formatKg(expected.minKg)} – {formatKg(expected.maxKg)}</strong>
+              </div>
+            )}
+            {treeCountMismatch && (
+              <p className="expected-panel__warn">
+                These age groups add up to {expected.totalTrees.toLocaleString('en-IN')} trees,
+                but you entered {declaredTrees.toLocaleString('en-IN')} total mango trees above.
+                Please check both numbers.
+              </p>
+            )}
+            <p className="expected-panel__foot">
+              This is a reference figure from standard production tables — not a target,
+              and not a judgement of your orchard.
+            </p>
+          </div>
+        )}
 
         <h3 className="form-section">Management</h3>
         <div className="form-grid">
@@ -231,21 +320,52 @@ municipality: '',
           </div>
         </div>
 
-        <h3 className="form-section">Production & Earnings (optional)</h3>
+        <h3 className="form-section">Production &amp; Earnings (optional)</h3>
         <div className="form-grid">
           <div>
             <label>Total Production (kg)</label>
             <input type="number" name="totalProductionKg" value={formData.totalProductionKg} onChange={handleChange} />
           </div>
           <div>
-            <label>Earnings this year (2082, NPR)</label>
-            <input type="number" name="totalEarnings2082" value={formData.totalEarnings2082} onChange={handleChange} />
+            <label>Earnings this year ({censusYear} BS, NPR)</label>
+            <input type="number" name="earningsCurrentYearNPR" value={formData.earningsCurrentYearNPR} onChange={handleChange} />
           </div>
           <div>
-            <label>Earnings last year (2081, NPR)</label>
-            <input type="number" name="totalEarnings2081" value={formData.totalEarnings2081} onChange={handleChange} />
+            <label>Earnings last year ({previousYear} BS, NPR)</label>
+            <input type="number" name="earningsPreviousYearNPR" value={formData.earningsPreviousYearNPR} onChange={handleChange} />
           </div>
         </div>
+
+        {showYieldCheck && (
+          <div className={`yield-check yield-check--${gap.flag}`}>
+            <div className="yield-check__head">
+              <span className="yield-check__dot" />
+              <strong>
+                {gap.flag === YIELD_FLAGS.OK && 'Your harvest matches your tree ages'}
+                {gap.flag === YIELD_FLAGS.REVIEW && 'Worth double-checking'}
+                {gap.flag === YIELD_FLAGS.OUTLIER && 'This looks quite different from expected'}
+                {gap.flag === YIELD_FLAGS.NO_BEARING &&
+                  'You reported a harvest, but none of your trees are old enough to bear yet'}
+              </strong>
+            </div>
+            {gap.gapPercent !== null && (
+              <p className="yield-check__body">
+                You reported <strong>{formatKg(reportedKg)}</strong>; trees of these ages
+                typically give <strong>{formatKg(expected.expectedKg)}</strong>
+                {' '}({gap.gapPercent > 0 ? '+' : ''}{gap.gapPercent}%).
+                {gap.flag !== YIELD_FLAGS.OK && ' Check the figure is in kilograms and covers the whole orchard.'}
+              </p>
+            )}
+            {gap.flag === YIELD_FLAGS.NO_BEARING && (
+              <p className="yield-check__body">
+                Check the tree ages above — trees under 4 years are normally not yet fruiting.
+              </p>
+            )}
+            <p className="yield-check__foot">
+              You can still submit either way. Your officer will review it.
+            </p>
+          </div>
+        )}
 
         <h3 className="form-section">Satisfaction</h3>
         <label>How satisfied are you with mango farming? (0 = not at all, 10 = extremely)</label>

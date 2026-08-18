@@ -5,7 +5,7 @@ import {
   FiGrid, FiPlusSquare, FiClipboard,
   FiMessageCircle, FiLogOut, FiMenu,
   FiChevronLeft, FiChevronRight, FiAlertTriangle, FiSend,
-  FiSun, FiMoon, FiFlag, FiTag, FiUserPlus,
+  FiSun, FiMoon, FiFlag, FiTag, FiUserPlus, FiBookOpen,
 } from 'react-icons/fi';
 import { logout } from '../store/authSlice';
 import { useTheme } from '../context/ThemeContext';
@@ -33,6 +33,7 @@ trader: [
   surveyor: [
     { to: '/officer/dashboard', label: 'Dashboard', icon: FiGrid, end: true },
     { to: '/officer/surveys', label: 'Pending Surveys', icon: FiClipboard },
+    { to: '/officer/census', label: 'Annual Census', icon: FiBookOpen },
     { to: '/officer/reports', label: 'Reported Problems', icon: FiFlag },
     { to: '/officer/market', label: 'Market Prices', icon: FiTag },
   ],
