@@ -377,6 +377,53 @@
   color: var(--color-vermillion);
 }
 
+/* ---------- Drill-down breadcrumb (admin census) ---------- */
+.census-crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 18px;
+}
+
+.census-crumb {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-orchard);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.census-crumb:hover:not(:disabled) { background: var(--color-bg); }
+.census-crumb:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 1px; }
+
+.census-crumb--current {
+  color: var(--color-ink);
+  cursor: default;
+}
+
+.census-crumb-sep {
+  color: var(--color-bark);
+  flex-shrink: 0;
+}
+
+/* Breakdown rows that open a deeper level */
+.row--drillable { cursor: pointer; }
+.row--drillable:hover td { background: var(--color-bg); }
+.row--drillable:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: -2px;
+}
+.row--drillable td:first-child::after {
+  content: ' ›';
+  color: var(--color-bark);
+  font-weight: 700;
+}
+
 /* ---------- Small helpers ---------- */
 .stat-sub {
   margin: 2px 0 0;

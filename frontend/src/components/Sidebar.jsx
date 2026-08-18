@@ -28,6 +28,7 @@ trader: [
 ],
   admin: [
     { to: '/admin/dashboard', label: 'Dashboard', icon: FiGrid, end: true },
+    { to: '/admin/census', label: 'National Census', icon: FiBookOpen },
     { to: '/admin/officers/new', label: 'Create Officer', icon: FiUserPlus },
   ],
   surveyor: [

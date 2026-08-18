@@ -435,6 +435,44 @@ export const getSurveyStats = async (req, res) => {
 // ---------------------------------------------------------------------------
 
 /**
+ * The census reports on a four-level geography: Nepal → province → district →
+ * municipality. The narrowest filter supplied decides which level the rows are
+ * grouped at, so the same endpoint serves every tier of the drill-down:
+ *
+ *   (nothing)            → rows are provinces
+ *   ?province=Madhesh    → rows are districts within Madhesh
+ *   ?district=Bara       → rows are municipalities within Bara
+ *
+ * An officer's coverage district is applied first and cannot be widened by a
+ * query parameter — passing ?province= as an officer changes nothing.
+ */
+const buildCensusScope = (query, user) => {
+  const filter = {};
+  applyOfficerScope(filter, user);
+
+  // Only an unscoped caller (admin) may set these.
+  if (!filter.district) {
+    if (query.province) filter.province = query.province;
+    if (query.district) filter.district = query.district;
+  }
+  if (query.status) filter.status = query.status;
+
+  const district = typeof filter.district === 'string' ? filter.district : null;
+  const province = filter.province || null;
+
+  const groupKey = filter.district ? 'municipality' : province ? 'district' : 'province';
+
+  return {
+    filter,
+    groupKey,
+    province,
+    district,
+    // Human-readable label for the current position in the hierarchy.
+    label: district || province || 'All provinces',
+  };
+};
+
+/**
  * The officer's yearly roll-up: totals for the district, a breakdown by
  * municipality, and the tree-age profile. Everything is plain arithmetic over
  * the recorded answers — the same sums an officer would do by hand.
@@ -447,14 +485,12 @@ export const getCensusSummary = async (req, res) => {
       return res.status(400).json({ success: false, message: `Invalid census year: ${req.query.year}` });
     }
 
-    const filter = { surveyYearBS: year };
-    applyOfficerScope(filter, req.user);
-    if (req.query.district && !filter.district) filter.district = req.query.district;
-    if (req.query.status) filter.status = req.query.status;
+    const scope = buildCensusScope(req.query, req.user);
+    const filter = { ...scope.filter, surveyYearBS: year };
 
     const surveys = await Survey.find(filter)
       .populate('farmerId', 'name phone')
-      .sort({ municipality: 1 });
+      .sort({ province: 1, district: 1, municipality: 1 });
 
     // Headline totals
     const totals = surveys.reduce(
@@ -500,8 +536,9 @@ export const getCensusSummary = async (req, res) => {
       };
     });
 
-    // Breakdown by municipality (or by district when viewing across districts)
-    const groupKey = filter.district ? 'municipality' : 'district';
+    // Rows for the current tier of the hierarchy: provinces, districts, or
+    // municipalities depending on how far the caller has drilled in.
+    const groupKey = scope.groupKey;
     const grouped = {};
     surveys.forEach((s) => {
       const key = s[groupKey] || 'Not recorded';
@@ -542,7 +579,11 @@ export const getCensusSummary = async (req, res) => {
       success: true,
       year,
       groupedBy: groupKey,
-      scope: filter.district || 'All districts',
+      // `scope` stays a plain label for existing callers; province/district are
+      // echoed separately so a client can render breadcrumbs and drill deeper.
+      scope: scope.label,
+      province: scope.province,
+      district: scope.district,
       availableYears: censusYearOptions(),
       totals: {
         ...totals,
@@ -634,22 +675,24 @@ export const exportCensusCsv = async (req, res) => {
       return res.status(400).json({ success: false, message: `Invalid census year: ${req.query.year}` });
     }
 
-    const filter = { surveyYearBS: year };
-    applyOfficerScope(filter, req.user);
-    if (req.query.district && !filter.district) filter.district = req.query.district;
-    if (req.query.status) filter.status = req.query.status;
+    const scope = buildCensusScope(req.query, req.user);
+    const filter = { ...scope.filter, surveyYearBS: year };
 
     const surveys = await Survey.find(filter)
       .populate('farmerId', 'name phone')
-      .sort({ district: 1, municipality: 1 });
+      .sort({ province: 1, district: 1, municipality: 1 });
 
     const rows = [
       CSV_COLUMNS.map(([header]) => csvCell(header)).join(','),
       ...surveys.map((s) => CSV_COLUMNS.map(([, get]) => csvCell(get(s))).join(',')),
     ];
 
-    const scope = (filter.district || 'all-districts').toLowerCase().replace(/\s+/g, '-');
-    const filename = `mango-census-${year}-${scope}.csv`;
+    // Name the file after whichever tier was exported, so a district and a
+    // province download never collide in the officer's downloads folder.
+    const slug = (scope.district || scope.province || 'nepal')
+      .toLowerCase()
+      .replace(/\s+/g, '-');
+    const filename = `mango-census-${year}-${slug}.csv`;
 
     logger.info(`Census CSV exported: ${filename} (${surveys.length} rows) by ${req.user.email}`);
 

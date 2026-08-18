@@ -17,13 +17,30 @@ import logger from './utils/logger.js';
 
 const app = express();
 
+/**
+ * How many proxy hops to trust when resolving `req.ip`.
+ *
+ * The login rate limiter keys on `req.ip`, so this cuts both ways:
+ *   - Behind a proxy with 0, every request carries the load balancer's address,
+ *     so one attacker's failures lock out every user sharing it.
+ *   - With no proxy and a non-zero value, Express believes X-Forwarded-For —
+ *     and any client can forge that header to hand itself a fresh identity on
+ *     each request, bypassing the limiter completely.
+ *
+ * So it is enabled only in production, where the platform's load balancer sits
+ * in front and overwrites the header. Override with TRUST_PROXY_HOPS if more
+ * than one proxy is in the chain.
+ */
+const trustProxyHops = process.env.TRUST_PROXY_HOPS
+  ? Number(process.env.TRUST_PROXY_HOPS)
+  : process.env.NODE_ENV === 'production'
+    ? 1
+    : 0;
+
+app.set('trust proxy', trustProxyHops);
+
 // Connect DB
 connectDB();
-
-// Rate limiting keys on req.ip. Behind a proxy (Render, Heroku, nginx, a load
-// balancer) every request would otherwise carry the proxy's address and one
-// attacker could lock out every user. Enable this when deploying behind one:
-// app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet());

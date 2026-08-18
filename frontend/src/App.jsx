@@ -27,6 +27,7 @@ import RequirementDetail from './pages/trader/RequirementDetail';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
+import AdminCensus from './pages/admin/Census';
 import CreateOfficer from './pages/admin/CreateOfficer';
 // Officer Pages
 import OfficerDashboard from './pages/officer/Dashboard';
@@ -233,6 +234,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole={['admin']}>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/census"
+          element={
+            <ProtectedRoute requiredRole={['admin']}>
+              <AdminCensus />
             </ProtectedRoute>
           }
         />
